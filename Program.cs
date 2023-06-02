@@ -30,12 +30,15 @@ namespace sensors_test
             MPU9250 mpu9250 = new(MPU9250Settings);
             I2cConnectionSettings AK8963Settings = new(busId, AK8963Address);
             AK8963 ak8963 = new(AK8963Settings);
+            mpu9250.Initialize();
             short[] temp = mpu9250.ReadGyroscope();
             Console.WriteLine("Gyroscope:");
             DEBUG.DebugPrintResults(temp);
             temp = mpu9250.ReadAccelerometer();
             Console.WriteLine("Accelerometer:");
             DEBUG.DebugPrintResults(temp);
+            short temp_s = mpu9250.ReadTemperature();
+            Console.WriteLine($"Temperature: {temp_s}");
             temp = ak8963.ReadMagnetometer();
             DEBUG.DebugPrintResults(temp);
         }
