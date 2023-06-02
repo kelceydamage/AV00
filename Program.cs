@@ -106,6 +106,7 @@ namespace sensors_test
         private static readonly int busId = 8;
         private static readonly byte MPU9250Address = 0x68;
         private static readonly byte AK8963Address = 0x0C;
+        private static readonly byte BMP280 = 0x77;
 
         public static void Main()
         {
