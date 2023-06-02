@@ -30,9 +30,9 @@ namespace sensors_test.Drivers.Sensors
         private readonly byte sampleRateDividerAddress = 0x19;
         private readonly byte interruptConfigAddress = 0x37;
         private readonly byte interruptEnableAddress = 0x38;
-        private byte[] gyroBuffer = new byte[6];
-        private byte[] accelBuffer = new byte[6];
-        private byte[] tempBuffer = new byte[2];
+        private readonly byte[] gyroBuffer = new byte[6];
+        private readonly byte[] accelBuffer = new byte[6];
+        private readonly byte[] tempBuffer = new byte[2];
         // Select gyroscope scale
         private readonly byte gScale = (byte)GScale.GFS_250DPS;
         // Select accelerometer scale
