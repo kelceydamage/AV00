@@ -196,7 +196,7 @@ namespace sensors_test.Drivers.ExpansionBoards
                 lastOperationStatus = BoardStatus.StatusErrorParameter;
             }
             byte[] buffer = new byte[2];
-            buffer[0] = (byte)Duty;
+            buffer[0] = Duty;
             buffer[1] = (byte)(Duty * 10 % 10);
             WriteBytes(channelId, buffer);
             CurrentDutyCycle = Duty;
