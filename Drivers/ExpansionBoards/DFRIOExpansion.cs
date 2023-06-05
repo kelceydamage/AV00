@@ -6,14 +6,14 @@ namespace sensors_test.Drivers.ExpansionBoards
 {
     public class DFRIOExpansion : I2CDriver
     {
-        private enum AnalogChannels
+        private enum AnalogChannels: byte
         {
             A0 = 0x00,
             A1 = 0x01,
             A2 = 0x02,
             A3 = 0x03
         };
-        public enum BoardStatus
+        public enum BoardStatus: byte
         {
             StatusOk = 0x00,
             StatusError = 0x01,
@@ -21,6 +21,20 @@ namespace sensors_test.Drivers.ExpansionBoards
             StatusErrorSoftwareVersion = 0x03,
             StatusErrorParameter = 0x04,
         }
+        public enum PwmChannelRegisters: byte
+        {
+            Pwm1 = 0x06,
+            Pwm2 = 0x08,
+            Pwm3 = 0x0a,
+            Pwm4 = 0x0c
+        };
+        public enum AdcChannelRegisters: byte
+        {
+            Adc1 = 0x0f,
+            Adc2 = 0x11,
+            Adc3 = 0x13,
+            Adc4 = 0x15
+        };
         public const byte PwmChannelCount = 4;
         public const byte AdcChannelCount = 4;
         private const byte secondaryAddressRegister = 0x00;
@@ -28,28 +42,20 @@ namespace sensors_test.Drivers.ExpansionBoards
         private const byte vidRegister = 0x02;
         private const byte pwmControlRegister = 0x03;
         private const byte pwmFrequencyRegister = 0x04;
-        public const byte PwmDuty1Register = 0x06;
-        public const byte PwmDuty2Register = 0x08;
-        public const byte PwmDuty3Register = 0x0a;
-        public const byte PwmDuty4Register = 0x0c;
         public readonly byte[] AllPwmRegisters = new byte[]
         {
-            PwmDuty1Register,
-            PwmDuty2Register,
-            PwmDuty3Register,
-            PwmDuty4Register
+            (byte)PwmChannelRegisters.Pwm1,
+            (byte)PwmChannelRegisters.Pwm2,
+            (byte)PwmChannelRegisters.Pwm3,
+            (byte)PwmChannelRegisters.Pwm4
         };
         private const byte adcControlRegister = 0x0e;
-        public const byte AdcValue1Register = 0x0f;
-        public const byte AdcValue2Register = 0x11;
-        public const byte AdcValue3Register = 0x13;
-        public const byte AdcValue4Register = 0x15;
         public readonly byte[] AllAdcRegisters = new byte[]
         {
-            AdcValue1Register,
-            AdcValue2Register,
-            AdcValue3Register,
-            AdcValue4Register
+            (byte)AdcChannelRegisters.Adc1,
+            (byte)AdcChannelRegisters.Adc2,
+            (byte)AdcChannelRegisters.Adc3,
+            (byte)AdcChannelRegisters.Adc4
         };
         private const byte defaultPidRegister = 0xdf;
         private const byte defaultVidRegister = 0x10;
@@ -57,6 +63,8 @@ namespace sensors_test.Drivers.ExpansionBoards
         private const byte disableByte = 0x00;
         private bool isPwmEnabled = false;
         private byte address;
+        public byte CurrentDutyCycle;
+        public uint CurrentFrequency;
         private BoardStatus lastOperationStatus = BoardStatus.StatusOk;
         public BoardStatus LastOperationStatus { 
             get
@@ -65,7 +73,6 @@ namespace sensors_test.Drivers.ExpansionBoards
             }
         }
 
-        // Bus 8, Address 0x10
         public DFRIOExpansion(I2cConnectionSettings Settings) : base(Settings)
         {
             isPwmEnabled = false;
@@ -178,10 +185,11 @@ namespace sensors_test.Drivers.ExpansionBoards
                 {
                     SetPwmEnable();
                 }
+                CurrentFrequency = frequency;
             }
         }
 
-        public void SetPwmDutyCycle(byte channelId, short Duty)
+        public void SetPwmDutyCycle(byte channelId, byte Duty)
         {
             if (Duty < 0 || Duty > 100)
             {
@@ -191,9 +199,10 @@ namespace sensors_test.Drivers.ExpansionBoards
             buffer[0] = (byte)Duty;
             buffer[1] = (byte)(Duty * 10 % 10);
             WriteBytes(channelId, buffer);
+            CurrentDutyCycle = Duty;
         }
 
-        public void SetPwmDutyCycle(byte[] channelId, short Duty)
+        public void SetPwmDutyCycle(byte[] channelId, byte Duty)
         {
             foreach (byte id in channelId)
             {

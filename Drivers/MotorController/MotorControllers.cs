@@ -1,29 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace sensors_test.Drivers.MotorControllers
 {
-    public interface MotorDriver
+    public interface IMotorDriver
     {
-        private ExpansionBoards.DFRIOExpansion controller { get; set; }
-        public byte MotorDriverAddress { get; set; }
-        public byte Motor1DirectionPin { get; set; }
-        public byte Motor2DirectionPin { get; set; }
-        byte Left { get; set; }
-        byte Right { get; set; }
-        byte Forwards { get; set; }
-        byte Backwards { get; set; }
+        public ExpansionBoards.DFRIOExpansion Controller { get; }
+        public byte MotorDriverAddress { get; }
+        public byte MotorDirectionPin { get; }
+        public uint MotorPwmFrequency { get; }
+        public byte Left { get; }
+        public byte Right { get; }
+        public byte Forwards { get; }
+        public byte Backwards { get; }
+        public byte DutyDownCycleStep { get; }
+        public short DutyDownCycleIntervalMs { get; }
+
+        public void RunMotor() { }
     }
 
     internal class PDSGBGearboxMotorController
     {
-        private readonly MotorDriver motorDriver;
-        PDSGBGearboxMotorController(MotorDriver MotorDriver)
+        public byte Motor1DirectionPin { get; } = 17;
+        public byte Motor2DirectionPin { get; } = 16;
+        private readonly IMotorDriver motorDriver1;
+        private readonly IMotorDriver motorDriver2;
+
+        public PDSGBGearboxMotorController(IMotorDriver MotorDriver1, IMotorDriver MotorDriver2)
         {
-            motorDriver = MotorDriver;
+            motorDriver1 = MotorDriver1;
+            motorDriver2 = MotorDriver2;
         }
+
+        public void Move() { }
+        public void Turn() { }
+
     }
 }
