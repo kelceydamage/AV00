@@ -1,4 +1,5 @@
 ﻿using System.Device.I2c;
+using static sensors_test.Drivers.ExpansionBoards.DFRIOExpansion;
 
 namespace sensors_test.Drivers
 {
@@ -10,6 +11,18 @@ namespace sensors_test.Drivers
         {
             I2CConnectionSettings = Settings;
             I2CDevice = I2cDevice.Create(I2CConnectionSettings);
+        }
+
+        protected void WriteBytes(byte register, byte[] buffer)
+        {
+            I2CDevice.WriteByte(register);
+            I2CDevice.Write(buffer);
+        }
+
+        protected void ReadBytes(byte register, byte[] buffer)
+        {
+            I2CDevice.WriteByte(register);
+            I2CDevice.Read(buffer);
         }
 
         // Turn the MSB and LSB into a signed 16-bit value

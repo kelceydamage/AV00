@@ -1,50 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Device.Pwm;
+﻿using System.Device.I2c;
 
 namespace sensors_test.Drivers.MotorController
 {
-    internal class MDD10A
+    public class MDD10A
     {
-        private readonly PwmChannel _pwmChannel;
-        private readonly int _dutyCycleInterval = 1;
-        private readonly float _dutyCycleDelay = 0.03f;
-        private readonly int _motor1DirectionPin = 17;
-        private readonly int _motor2DirectionPin = 16;
-        private readonly int _pwmChip;
-        private readonly int _pwmChannelNumber;
+        private ExpansionBoards.DFRIOExpansion Controller { get; set; }
+        public byte MotorDriverAddress { get; private set; } = 0x10;
+        public byte Motor1DirectionPin { get; private set; } = 17;
+        public byte Motor2DirectionPin { get; private set; } = 16;
+        byte Left { get; set; } = 0;
+        byte Right { get; set; } = 1;
+        byte Forwards { get; set; } = 0;
+        byte Backwards { get; set; } = 1;
+        private readonly int dutyDownCycleInterval = 1;
+        private readonly float dutyDownCycleDelay = 0.03f;
+        private readonly int pwmChip;
+        private readonly int pwmChannelNumber;
 
-        public MDD10A(int pin, int pwmChip, int pwmChannelNumber, int frequency, int dutyCycle)
+        public MDD10A(I2cConnectionSettings Settings)
         {
-            _pin = pin;
-            _pwmChip = pwmChip;
-            _pwmChannelNumber = pwmChannelNumber;
-            _frequency = frequency;
-            _dutyCycle = dutyCycle;
-            _pwmChannel = PwmChannel.Create(pwmChip, pwmChannelNumber, frequency, dutyCycle);
-        }
-
-        public void Start()
-        {
-            _pwmChannel.Start();
-        }
-
-        public void Stop()
-        {
-            _pwmChannel.Stop();
-        }
-
-        public void SetDutyCycle(int dutyCycle)
-        {
-            _pwmChannel.DutyCycle = dutyCycle;
-        }
-
-        public void SetFrequency(int frequency)
-        {
-            _pwmChannel.Frequency = frequency;
+            Controller = new ExpansionBoards.DFRIOExpansion(Settings);
         }
     }
 }
