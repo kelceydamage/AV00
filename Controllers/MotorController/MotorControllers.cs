@@ -1,27 +1,16 @@
-﻿using System;
+﻿using sensors_test.Drivers;
+using sensors_test.Drivers.ExpansionBoards;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Device.Pwm;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static sensors_test.Drivers.ExpansionBoards.DFRIOExpansion;
 
-namespace sensors_test.Drivers.MotorControllers
+namespace sensors_test.Controllers.MotorController
 {
-    public interface IMotorDriver
-    {
-        public ExpansionBoards.DFRIOExpansion Controller { get; }
-        public byte MotorDriverAddress { get; }
-        public byte MotorDirectionPin { get; }
-        public uint MotorPwmFrequency { get; }
-        public byte Left { get; }
-        public byte Right { get; }
-        public byte Forwards { get; }
-        public byte Backwards { get; }
-        public byte DutyDownCycleStep { get; }
-        public short DutyDownCycleIntervalMs { get; }
-
-        public void RunMotor() { }
-    }
 
     internal class PDSGBGearboxMotorController
     {

@@ -1,11 +1,12 @@
 ﻿// Based on https://github.com/DFRobot/DFRobot_RaspberryPi_Expansion_Board/blob/master/DFRobot_RaspberryPi_Expansion_Board.py
 using System.Device.I2c;
-//using sensors_test.Drivers;
 
 namespace sensors_test.Drivers.ExpansionBoards
 {
-    public class DFRIOExpansion : I2CDriver
+    public class DFRIOExpansion: IExpansionBoard
     {
+        public I2CDeviceRegistry SecondaryI2cDevices { get; } = new I2CDeviceRegistry();
+        public PWMDeviceRegistry SecondaryPwmDevices { get; } = new PWMDeviceRegistry();
         private enum AnalogChannels: byte
         {
             A0 = 0x00,
@@ -73,21 +74,20 @@ namespace sensors_test.Drivers.ExpansionBoards
             }
         }
 
-        public DFRIOExpansion(I2cConnectionSettings Settings) : base(Settings)
+        public DFRIOExpansion(I2cConnectionSettings Settings)
         {
-            isPwmEnabled = false;
+            SecondaryI2cDevices.Register(new I2CDeviceDriver(Settings));
         }
 
         // Find a way to register sensors and other devices such that we only need one instance of the Expansion Board.
         // Perhaps a map of devices to I2CDevice objects?
-        public void RegisterSecondaryI2CDevice() { }
 
         public BoardStatus Start()
         {
             byte[] pidBuffer = new byte[1];
-            ReadBytes(pidRegister, pidBuffer);
+            ReadBytes<I2CDeviceDriver>(pidRegister, pidBuffer);
             byte[] vidBuffer = new byte[1];
-            ReadBytes(vidRegister, vidBuffer);
+            ReadBytes<I2CDeviceDriver>(vidRegister, vidBuffer);
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 if (pidBuffer[0] != defaultPidRegister)
@@ -108,11 +108,11 @@ namespace sensors_test.Drivers.ExpansionBoards
             return lastOperationStatus;
         }
 
-        public new void WriteBytes(byte register, byte[] buffer)
+        public void WriteBytes<T>(byte register, byte[] buffer) where T : I2CDeviceDriver
         {
             try
             {
-                WriteBytes(register, buffer);
+                SecondaryI2cDevices.Get<T>().WriteBytes(register, buffer);
                 lastOperationStatus = BoardStatus.StatusOk;
             }
             catch (Exception)
@@ -121,11 +121,11 @@ namespace sensors_test.Drivers.ExpansionBoards
             }
         }
 
-        public new void ReadBytes(byte register, byte[] buffer)
+        public void ReadBytes<T>(byte register, byte[] buffer) where T : I2CDeviceDriver
         {
             try
             {
-                ReadBytes(register, buffer);
+                SecondaryI2cDevices.Get<T>().ReadBytes(register, buffer);
                 lastOperationStatus = BoardStatus.StatusOk;
             }
             catch (Exception)
@@ -144,7 +144,7 @@ namespace sensors_test.Drivers.ExpansionBoards
             {
                 byte[] buffer = new byte[1];
                 buffer[0] = Address;
-                WriteBytes(secondaryAddressRegister, buffer);
+                WriteBytes<I2CDeviceDriver>(secondaryAddressRegister, buffer);
             }
         }
 
@@ -152,7 +152,7 @@ namespace sensors_test.Drivers.ExpansionBoards
         {
             byte[] buffer = new byte[1];
             buffer[0] = disableByte;
-            WriteBytes(pwmControlRegister, buffer);
+            WriteBytes<I2CDeviceDriver>(pwmControlRegister, buffer);
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 isPwmEnabled = false;
@@ -163,7 +163,7 @@ namespace sensors_test.Drivers.ExpansionBoards
         {
             byte[] buffer = new byte[1];
             buffer[0] = enableByte;
-            WriteBytes(pwmControlRegister, buffer);
+            WriteBytes<I2CDeviceDriver>(pwmControlRegister, buffer);
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 isPwmEnabled = true;
@@ -183,7 +183,7 @@ namespace sensors_test.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)(frequency >> 8);
                 buffer[1] = (byte)(frequency & 0xff);
-                WriteBytes(pwmFrequencyRegister, buffer);
+                WriteBytes<I2CDeviceDriver>(pwmFrequencyRegister, buffer);
                 Thread.Sleep(100);
                 if (pwmPreviousFlag)
                 {
@@ -191,6 +191,11 @@ namespace sensors_test.Drivers.ExpansionBoards
                 }
                 CurrentFrequency = frequency;
             }
+        }
+
+        public void SetPwmFrequency<T>() where T : IMotorDriver
+        {
+            SetPwmFrequency(SecondaryPwmDevices.Get<T>().MotorPwmFrequency);
         }
 
         public void SetPwmDutyCycle(byte channelId, byte Duty)
@@ -202,8 +207,13 @@ namespace sensors_test.Drivers.ExpansionBoards
             byte[] buffer = new byte[2];
             buffer[0] = Duty;
             buffer[1] = (byte)(Duty * 10 % 10);
-            WriteBytes(channelId, buffer);
+            WriteBytes<I2CDeviceDriver>(channelId, buffer);
             CurrentDutyCycle = Duty;
+        }
+
+        public void SetPwnDutyCycle<T>(byte Duty) where T : IMotorDriver
+        {
+            SetPwmDutyCycle(SecondaryPwmDevices.Get<T>().PwmChannel, Duty);
         }
 
         public void SetPwmDutyCycle(byte[] channelId, byte Duty)
@@ -218,20 +228,20 @@ namespace sensors_test.Drivers.ExpansionBoards
         {
             byte[] buffer = new byte[1];
             buffer[0] = enableByte;
-            WriteBytes(adcControlRegister, buffer);
+            WriteBytes<I2CDeviceDriver>(adcControlRegister, buffer);
         }
 
         public void SetAdcDisable()
         {
             byte[] buffer = new byte[1];
             buffer[0] = disableByte;
-            WriteBytes(adcControlRegister, buffer);
+            WriteBytes<I2CDeviceDriver>(adcControlRegister, buffer);
         }
 
         public int GetAdcValue(byte channelId)
         {
             byte[] buffer = new byte[2];
-            ReadBytes(channelId, buffer);
+            ReadBytes<I2CDeviceDriver>(channelId, buffer);
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 return (buffer[0] << 8) | buffer[1];

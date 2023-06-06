@@ -3,7 +3,7 @@ using System.Device.I2c;
 
 namespace sensors_test.Drivers.Sensors
 {
-    public class MPU9250 : I2CDriver
+    public class MPU9250 : I2CDeviceDriver
     {
         private enum AScale
         {

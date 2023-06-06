@@ -4,7 +4,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace sensors_test.Drivers.Sensors
 {
-    public class AK8963 : I2CDriver
+    public class AK8963 : I2CDeviceDriver
     {
         enum MScale
         {
