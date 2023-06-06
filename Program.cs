@@ -3,6 +3,11 @@ using System.IO;
 // https://github.com/dotnet/iot/blob/main/src/System.Device.Gpio/System/Device/I2c/I2cDevice.cs#L11
 using System.Device.I2c;
 using sensors_test.Drivers.Sensors;
+using sensors_test.Services;
+using sensors_test.Drivers.IO;
+using sensors_test.Drivers;
+using sensors_test.Drivers.Motors;
+using sensors_test.Controllers.MotorController;
 
 namespace sensors_test
 {
@@ -16,16 +21,39 @@ namespace sensors_test
         }
     }
 
+
     public class Program
     {
-        private static readonly int busId = 8;
+        private static readonly byte boardBusId = 8;
+        private static readonly byte boardAddress = 0x10;
         private static readonly byte MPU9250Address = 0x68;
         // Device may be missing/broken on board
         private static readonly byte AK8963Address = 0x0C;
         private static readonly byte BMP280 = 0x77;
+        private static readonly uint pwmFrequency = 18000;
 
         public static void Main()
         {
+            DeviceRegistryService DeviceRegistry = new();
+            ServiceRegistry.AddService(DeviceRegistry);
+
+            HardwareIODriver BoardIO = new(boardBusId, boardAddress);
+            HardwareIODriver.BoardStatus initStatus = BoardIO.Init();
+            Console.WriteLine($"Board Status: {initStatus}");
+
+            BoardIO.SetPwmEnable();
+            BoardIO.SetPwmFrequency(pwmFrequency);
+
+            IMotorDriver DriveMotor = new MDD10A(BoardIO, 18, HardwareIODriver.PwmChannelRegisters.Pwm1);
+            DeviceRegistry.AddDevice(DriveMotor);
+            IMotorDriver TurningMotor = new MDD10A(BoardIO, 17, HardwareIODriver.PwmChannelRegisters.Pwm2);
+            DeviceRegistry.AddDevice(TurningMotor);
+
+            PDSGBGearboxMotorController motorController = new(DriveMotor, TurningMotor);
+            //motorController.Test();
+
+            // ---
+            /*
             I2cConnectionSettings MPU9250Settings = new(busId, MPU9250Address);
             MPU9250 mpu9250 = new(MPU9250Settings);
             I2cConnectionSettings AK8963Settings = new(busId, AK8963Address);
@@ -41,6 +69,7 @@ namespace sensors_test
             Console.WriteLine($"Temperature: {temp_s}");
             temp = ak8963.ReadMagnetometer();
             DEBUG.DebugPrintResults(temp);
+            */
         }
     }
 }
