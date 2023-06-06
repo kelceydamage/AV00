@@ -26,14 +26,14 @@ namespace sensors_test.Drivers.MotorControllers
     internal class PDSGBGearboxMotorController
     {
         public byte Motor1DirectionPin { get; } = 17;
-        public byte Motor2DirectionPin { get; } = 16;
-        private readonly IMotorDriver motorDriver1;
-        private readonly IMotorDriver motorDriver2;
+        public byte Motor2DirectionPin { get; } = 18;
+        private readonly IMotorDriver turningMotor;
+        private readonly IMotorDriver driveMotor;
 
-        public PDSGBGearboxMotorController(IMotorDriver MotorDriver1, IMotorDriver MotorDriver2)
+        public PDSGBGearboxMotorController(IMotorDriver TurningMotor, IMotorDriver DriveMotor)
         {
-            motorDriver1 = MotorDriver1;
-            motorDriver2 = MotorDriver2;
+            turningMotor = TurningMotor;
+            driveMotor = DriveMotor;
         }
 
         public void Move() { }

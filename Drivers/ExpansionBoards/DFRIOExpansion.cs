@@ -78,6 +78,10 @@ namespace sensors_test.Drivers.ExpansionBoards
             isPwmEnabled = false;
         }
 
+        // Find a way to register sensors and other devices such that we only need one instance of the Expansion Board.
+        // Perhaps a map of devices to I2CDevice objects?
+        public void RegisterSecondaryI2CDevice() { }
+
         public BoardStatus Start()
         {
             byte[] pidBuffer = new byte[1];
