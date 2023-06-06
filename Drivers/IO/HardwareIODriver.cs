@@ -1,5 +1,7 @@
 ﻿// Based on https://github.com/DFRobot/DFRobot_RaspberryPi_Expansion_Board/blob/master/DFRobot_RaspberryPi_Expansion_Board.py
 using System.Device.I2c;
+using System.Device.Gpio;
+using System.Net.NetworkInformation;
 
 namespace sensors_test.Drivers.IO
 {
@@ -34,6 +36,7 @@ namespace sensors_test.Drivers.IO
             Adc3 = 0x13,
             Adc4 = 0x15
         };
+        public PinMode GPIOPinMode;
         public const byte PwmChannelCount = 4;
         public const byte AdcChannelCount = 4;
         private const byte secondaryAddressRegister = 0x00;
@@ -83,6 +86,11 @@ namespace sensors_test.Drivers.IO
         {
             I2cConnectionSettings Settings = new(boardI2cChannel.I2cConnectionSettings.BusId, I2cAddress);
             return new I2cChannelWrapper(Settings);
+        }
+
+        public GpioController CreateGpioInstance()
+        {
+            return new();
         }
 
         public BoardStatus Init()

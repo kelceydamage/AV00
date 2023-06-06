@@ -22,6 +22,8 @@ namespace sensors_test
     }
 
 
+    // Requires libgpiod-dev
+    // sudo apt install -y libgpiod-dev
     public class Program
     {
         private static readonly byte boardBusId = 8;
@@ -38,11 +40,13 @@ namespace sensors_test
             ServiceRegistry.AddService(DeviceRegistry);
 
             HardwareIODriver BoardIO = new(boardBusId, boardAddress);
-            HardwareIODriver.BoardStatus initStatus = BoardIO.Init();
-            Console.WriteLine($"Board Status: {initStatus}");
+            BoardIO.Init();
+            Console.WriteLine($"Init Board Status: {BoardIO.LastOperationStatus}");
 
             BoardIO.SetPwmEnable();
+            Console.WriteLine($"Set PWM Enable Board Status: {BoardIO.LastOperationStatus}");
             BoardIO.SetPwmFrequency(pwmFrequency);
+            Console.WriteLine($"Set PWM Frequencey Board Status: {BoardIO.LastOperationStatus}");
 
             IMotorDriver DriveMotor = new MDD10A(BoardIO, 18, HardwareIODriver.PwmChannelRegisters.Pwm1);
             DeviceRegistry.AddDevice(DriveMotor);
@@ -50,7 +54,7 @@ namespace sensors_test
             DeviceRegistry.AddDevice(TurningMotor);
 
             PDSGBGearboxMotorController motorController = new(DriveMotor, TurningMotor);
-            //motorController.Test();
+            motorController.Test();
 
             // ---
             /*
