@@ -1,7 +1,6 @@
 ﻿// Based on https://github.com/DFRobot/DFRobot_RaspberryPi_Expansion_Board/blob/master/DFRobot_RaspberryPi_Expansion_Board.py
 using System.Device.I2c;
 using System.Device.Gpio;
-using System.Net.NetworkInformation;
 
 namespace sensors_test.Drivers.IO
 {
@@ -86,11 +85,6 @@ namespace sensors_test.Drivers.IO
         {
             I2cConnectionSettings Settings = new(boardI2cChannel.I2cConnectionSettings.BusId, I2cAddress);
             return new I2cChannelWrapper(Settings);
-        }
-
-        public GpioController CreateGpioInstance()
-        {
-            return new();
         }
 
         public BoardStatus Init()
@@ -183,7 +177,7 @@ namespace sensors_test.Drivers.IO
 
         public void SetPwmFrequency(uint frequency)
         {
-            if (frequency < 1 || frequency > 1000)
+            if (frequency < 1 || frequency > 48000)
             {
                 lastOperationStatus = BoardStatus.StatusErrorParameter;
             }

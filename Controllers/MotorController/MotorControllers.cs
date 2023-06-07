@@ -17,6 +17,7 @@ namespace sensors_test.Controllers.MotorController
         public void Test()
         {
             driveMotor.Start(driveMotor.Forwards, 25);
+            Thread.Sleep(1000);
             driveMotor.Stop();
         }
         public void Move() { }

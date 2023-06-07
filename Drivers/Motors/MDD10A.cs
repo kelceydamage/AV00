@@ -1,11 +1,12 @@
 ﻿using sensors_test.Drivers.IO;
 using System.Device.Gpio;
+using System.Device.Gpio.Drivers;
 
 namespace sensors_test.Drivers.Motors
 {
     public class MDD10A : IMotorDriver
     {
-        public byte MotorDirectionPin { get; }
+        public short MotorDirectionPin { get; }
         public PinValue Left { get; } = PinValue.Low;
         public PinValue Right { get; } = PinValue.High;
         public PinValue Forwards { get; } = PinValue.Low;
@@ -16,23 +17,42 @@ namespace sensors_test.Drivers.Motors
         private PinValue currentDirection = 0;
         private byte currentDutyCycle = 0;
         private readonly HardwareIODriver IO;
-        private readonly GpioController Gpio = new();
+        private readonly GpioController Gpio;
 
-        public MDD10A(HardwareIODriver IODriver, byte MotorDirectionPinId, HardwareIODriver.PwmChannelRegisters PwmChannelRegister)
+        public MDD10A(HardwareIODriver IODriver, short MotorDirectionPinId, HardwareIODriver.PwmChannelRegisters PwmChannelRegister)
         {
+            Console.WriteLine($"Motor Init Start");
             IO = IODriver;
-            Gpio.OpenPin(MotorDirectionPinId, PinMode.Output);
+            Console.WriteLine($"-- Add GPIO");
+            try
+            {
+                Gpio = new GpioController(PinNumberingScheme.Logical, new SysFsDriver());
+                Console.WriteLine($"-- Created GpioController");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"-- Add GPIO Error: {e.Message}");
+                throw new Exception($"Failed to initialize GPIO Controller: {e.Message}");
+            }
+            Console.WriteLine($"-- Open Pin");
+            Gpio.OpenPin(MotorDirectionPinId);
+            Console.WriteLine($"-- Set Direction Pin Value");
             MotorDirectionPin = MotorDirectionPinId;
+            Console.WriteLine($"-- Set PWM Channel");
             PwmChannel = (byte)PwmChannelRegister;
+            Console.WriteLine($"Motor Initialized");
         }
 
         public void Start(PinValue Direction, byte Power)
         {
+            Console.WriteLine($"Check Direction");
             if (Direction != currentDirection)
             {
                 SafeDirectionSwitch();
             }
+            Console.WriteLine($"Power Motor");
             SetDutyAndDirection(Direction, Power);
+            Console.WriteLine($"Set PWM Duty Cycle Board Status: {IO.LastOperationStatus}");
             currentDirection = Direction;
         }
 
@@ -63,6 +83,7 @@ namespace sensors_test.Drivers.Motors
                     currentDutyCycle = 0;
                 }
                 SetDutyAndDirection(currentDirection, currentDutyCycle);
+                Console.WriteLine($"Set PWM Duty Cycle Board Status: {IO.LastOperationStatus}");
                 Thread.Sleep(DutyDownCycleIntervalMs);
             }
         }
