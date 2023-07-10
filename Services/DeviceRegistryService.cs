@@ -9,7 +9,8 @@ namespace sensors_test.Services
 
         public void AddDevice(IDeviceDriver Device)
         {
-            string key = nameof(Device);
+            string key = Device.Name;
+            Console.WriteLine($"Adding Device {key}");
             if (Devices.ContainsKey(key))
             {
                 throw new Exception($"Device {key} already found in registry");

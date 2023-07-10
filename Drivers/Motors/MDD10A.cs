@@ -14,19 +14,21 @@ namespace sensors_test.Drivers.Motors
         public byte DutyDownCycleStep { get; } = 1;
         public short DutyDownCycleIntervalMs { get; } = 300;
         public byte PwmChannel { get; }
+        public string Name { get; set; }
         private PinValue currentDirection = 0;
         private byte currentDutyCycle = 0;
         private readonly HardwareIODriver IO;
         private readonly GpioController Gpio;
 
-        public MDD10A(HardwareIODriver IODriver, short MotorDirectionPinId, HardwareIODriver.PwmChannelRegisters PwmChannelRegister)
+        public MDD10A(HardwareIODriver IODriver, short MotorDirectionPinId, HardwareIODriver.PwmChannelRegisters PwmChannelRegister, string name)
         {
             Console.WriteLine($"Motor Init Start");
             IO = IODriver;
             Console.WriteLine($"-- Add GPIO");
             try
             {
-                Gpio = new GpioController(PinNumberingScheme.Logical, new SysFsDriver());
+                //Gpio = new GpioController(PinNumberingScheme.Logical, new SysFsDriver());
+                Gpio = new GpioController(PinNumberingScheme.Logical, new LibGpiodDriver(1));
                 Console.WriteLine($"-- Created GpioController");
             }
             catch (Exception e)
@@ -34,13 +36,16 @@ namespace sensors_test.Drivers.Motors
                 Console.WriteLine($"-- Add GPIO Error: {e.Message}");
                 throw new Exception($"Failed to initialize GPIO Controller: {e.Message}");
             }
+            Console.WriteLine($"-- Pin Count: {Gpio.PinCount}");
             Console.WriteLine($"-- Open Pin");
             Gpio.OpenPin(MotorDirectionPinId);
+            Console.WriteLine($"-- Pin Mode: {Gpio.GetPinMode(MotorDirectionPinId)}");
             Console.WriteLine($"-- Set Direction Pin Value");
             MotorDirectionPin = MotorDirectionPinId;
             Console.WriteLine($"-- Set PWM Channel");
             PwmChannel = (byte)PwmChannelRegister;
             Console.WriteLine($"Motor Initialized");
+            Name = name;
         }
 
         public void Start(PinValue Direction, byte Power)
@@ -64,6 +69,7 @@ namespace sensors_test.Drivers.Motors
         public void Dispose()
         {
             Stop();
+            Gpio.ClosePin(MotorDirectionPin);
             Gpio.Dispose();
         }
 

@@ -4,7 +4,7 @@ namespace sensors_test.Drivers
 {
     public interface IDeviceDriver
     {
-        
+        public string Name { get; set; }
     }
 
     public interface IMotorDriver : IDeviceDriver

@@ -1,6 +1,8 @@
 ﻿// Based on https://github.com/DFRobot/DFRobot_RaspberryPi_Expansion_Board/blob/master/DFRobot_RaspberryPi_Expansion_Board.py
 using System.Device.I2c;
 using System.Device.Gpio;
+using System.Net;
+using System;
 
 namespace sensors_test.Drivers.IO
 {
@@ -20,6 +22,8 @@ namespace sensors_test.Drivers.IO
             StatusErrorDeviceNotDetected = 0x02,
             StatusErrorSoftwareVersion = 0x03,
             StatusErrorParameter = 0x04,
+            StatusErrorUnableToRead = 0x05,
+            StatusErrorUnableToWrite = 0x06,
         }
         public enum PwmChannelRegisters : byte
         {
@@ -64,6 +68,7 @@ namespace sensors_test.Drivers.IO
         private const byte disableByte = 0x00;
         private bool isPwmEnabled = false;
         private byte address;
+        public byte BusId;
         public uint CurrentFrequency;
         private BoardStatus lastOperationStatus = BoardStatus.StatusOk;
         private I2cChannelWrapper boardI2cChannel;
@@ -74,10 +79,12 @@ namespace sensors_test.Drivers.IO
                 return lastOperationStatus;
             }
         }
+        public string ErrorMessage = "";
 
-        public HardwareIODriver(byte BusId, byte Address)
+        public HardwareIODriver(byte I2CBusId, byte Address)
         {
-            I2cConnectionSettings settings = new(BusId, Address);
+            BusId = I2CBusId;
+            I2cConnectionSettings settings = new(I2CBusId, Address);
             boardI2cChannel = new I2cChannelWrapper(settings);
         }
 
@@ -93,15 +100,19 @@ namespace sensors_test.Drivers.IO
             ReadBytes(pidRegister, pidBuffer);
             byte[] vidBuffer = new byte[1];
             ReadBytes(vidRegister, vidBuffer);
+            
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 if (pidBuffer[0] != defaultPidRegister)
                 {
                     lastOperationStatus = BoardStatus.StatusErrorDeviceNotDetected;
+                    ErrorMessage = $"PID: {pidBuffer[0]}, defaultPidRegister: {defaultPidRegister}";
                 }
                 else if (vidBuffer[0] != defaultVidRegister)
                 {
+
                     lastOperationStatus = BoardStatus.StatusErrorSoftwareVersion;
+                    ErrorMessage = $"VID: {vidBuffer[0]}, defaultVidRegister: {defaultVidRegister}";
                 }
                 else
                 {
@@ -122,7 +133,7 @@ namespace sensors_test.Drivers.IO
             }
             catch (Exception)
             {
-                lastOperationStatus = BoardStatus.StatusErrorDeviceNotDetected;
+                lastOperationStatus = BoardStatus.StatusErrorUnableToWrite;
             }
         }
 
@@ -135,7 +146,7 @@ namespace sensors_test.Drivers.IO
             }
             catch (Exception)
             {
-                lastOperationStatus = BoardStatus.StatusErrorDeviceNotDetected;
+                lastOperationStatus = BoardStatus.StatusErrorUnableToRead;
             }
         }
 
@@ -261,10 +272,12 @@ namespace sensors_test.Drivers.IO
             byte oldAddress = address;
             for (byte i = 1; i < 127; i++)
             {
-                address = i;
+                I2cConnectionSettings _settings = new(BusId, i);
+                boardI2cChannel = new I2cChannelWrapper(_settings);
                 if (Init() == BoardStatus.StatusOk)
                 {
-                    buffer[0] = address;
+                    buffer[0] = i;
+                    Console.WriteLine($"Found Initial Address: {i}");
                 }
             }
             string[] validAddresses = new string[buffer.Length];
@@ -273,8 +286,11 @@ namespace sensors_test.Drivers.IO
                 byte[] bytes = new byte[1];
                 bytes[0] = buffer[i];
                 validAddresses[i] = Convert.ToHexString(bytes);
+                Console.WriteLine($"Found Address: {validAddresses[i]}");
             }
             address = oldAddress;
+            I2cConnectionSettings settings = new(BusId, address);
+            boardI2cChannel = new I2cChannelWrapper(settings);
             lastOperationStatus = BoardStatus.StatusOk;
             return validAddresses;
         }
