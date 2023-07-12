@@ -49,12 +49,13 @@ namespace sensors_test
         private static readonly byte AK8963Address = 0x0C;
         private static readonly byte BMP280 = 0x77;
         private static readonly uint pwmFrequency = 18000;
+        private static readonly int GpioControllerId = 1;
 
         public static void Main()
         {
             DeviceRegistryService DeviceRegistry = new();
             ServiceRegistry.AddService(DeviceRegistry);
-            HardwareIODriver BoardIO = new(boardBusId, boardAddress);
+            HardwareIODriver BoardIO = new(boardBusId, boardAddress, GpioControllerId);
             // BoardIO.DetectAddress();
             BoardIO.Init();
 
@@ -69,20 +70,19 @@ namespace sensors_test
                 Console.WriteLine($"Set PWM Frequencey Board Status: {BoardIO.LastOperationStatus}");
 
                 Console.WriteLine($"Register Drive Motor");
-                IMotorDriver DriveMotor = new MDD10A(BoardIO, 127, HardwareIODriver.PwmChannelRegisters.Pwm2, "DriveMotor");
+                IMotorDriver DriveMotor = new MDD10A(BoardIO, 112, HardwareIODriver.PwmChannelRegisters.Pwm2, "DriveMotor");
                 Console.WriteLine($"Add Drive Motor To Registry");
                 DeviceRegistry.AddDevice(DriveMotor);
                 Console.WriteLine($"Register Turn Motor");
-                IMotorDriver TurningMotor = new MDD10A(BoardIO, 112, HardwareIODriver.PwmChannelRegisters.Pwm1, "TurningMotor");
+                IMotorDriver TurningMotor = new MDD10A(BoardIO, 127, HardwareIODriver.PwmChannelRegisters.Pwm1, "TurningMotor");
                 Console.WriteLine($"Add Turn Motor To Registry");
                 DeviceRegistry.AddDevice(TurningMotor);
 
-                //PDSGBGearboxMotorController motorController = new(DriveMotor, TurningMotor);
-                //Console.WriteLine($"Run Test:");
-                //motorController.Test();
+                PDSGBGearboxMotorController motorController = new(DriveMotor, TurningMotor);
+                Console.WriteLine($"Run Test:");
+                motorController.Test();
 
-                DriveMotor.Dispose();
-                TurningMotor.Dispose();
+                BoardIO.DisposeGpio();
             }
             else
             {

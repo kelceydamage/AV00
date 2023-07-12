@@ -1,4 +1,7 @@
 ﻿using sensors_test.Drivers;
+using System.Device.Gpio.Drivers;
+using System.Device.Gpio;
+using System.Numerics;
 
 namespace sensors_test.Controllers.MotorController
 {
@@ -16,7 +19,8 @@ namespace sensors_test.Controllers.MotorController
 
         public void Test()
         {
-            driveMotor.Start(driveMotor.Forwards, 25);
+            Console.WriteLine($"Drive: {driveMotor.Backwards} speed: {25}");
+            driveMotor.Start(driveMotor.Backwards, 25);
             Thread.Sleep(1000);
             driveMotor.Stop();
         }

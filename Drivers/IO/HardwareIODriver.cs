@@ -3,6 +3,8 @@ using System.Device.I2c;
 using System.Device.Gpio;
 using System.Net;
 using System;
+using System.Device.Gpio.Drivers;
+using System.Numerics;
 
 namespace sensors_test.Drivers.IO
 {
@@ -70,6 +72,7 @@ namespace sensors_test.Drivers.IO
         private byte address;
         public byte BusId;
         public uint CurrentFrequency;
+        private readonly GpioController Gpio;
         private BoardStatus lastOperationStatus = BoardStatus.StatusOk;
         private I2cChannelWrapper boardI2cChannel;
         public BoardStatus LastOperationStatus
@@ -81,11 +84,12 @@ namespace sensors_test.Drivers.IO
         }
         public string ErrorMessage = "";
 
-        public HardwareIODriver(byte I2CBusId, byte Address)
+        public HardwareIODriver(byte I2CBusId, byte Address, int GpioControllerId)
         {
             BusId = I2CBusId;
             I2cConnectionSettings settings = new(I2CBusId, Address);
             boardI2cChannel = new I2cChannelWrapper(settings);
+            Gpio = new GpioController(PinNumberingScheme.Logical, new LibGpiodDriver(GpioControllerId));
         }
 
         public I2cChannelWrapper CreateI2cChannelInstance(int I2cAddress)
@@ -293,6 +297,56 @@ namespace sensors_test.Drivers.IO
             boardI2cChannel = new I2cChannelWrapper(settings);
             lastOperationStatus = BoardStatus.StatusOk;
             return validAddresses;
+        }
+
+        public void SafeWritePin(int PinNumber, PinValue Value)
+        {
+            OpenPin(PinNumber);
+            SetPinMode(PinNumber, PinMode.Output);
+            WritePin(PinNumber, Value);
+            ClosePin(PinNumber);
+        }
+
+        public void WritePin(int PinNumber, PinValue Value)
+        {
+            Gpio.Write(PinNumber, Value);
+        }
+
+        public void SetPinMode(int PinNumber, PinMode Mode)
+        {
+            if (!Gpio.IsPinModeSupported(PinNumber, Mode))
+            {
+                throw new Exception($"**** GPIO Pin {PinNumber} does not support mode: {Mode}");
+            }
+            Gpio.SetPinMode(PinNumber, Mode);
+        }
+
+        public void OpenPin(int PinNumber)
+        {
+            if (Gpio.IsPinOpen(PinNumber))
+            {
+                throw new Exception($"**** GPIO Pin {PinNumber} already open");
+            }
+            Gpio.OpenPin(PinNumber);
+        }
+
+        public void ClosePin(int PinNumber)
+        {
+            if (!Gpio.IsPinOpen(PinNumber))
+            {
+                throw new Exception($"**** GPIO Pin {PinNumber} already closed");
+            }
+            Gpio.ClosePin(PinNumber);
+        }
+
+        public void DisposeGpio()
+        {
+            Gpio.Dispose();
+        }
+
+        public int GetGpioPinCount()
+        {
+            return Gpio.PinCount;
         }
     }
 
