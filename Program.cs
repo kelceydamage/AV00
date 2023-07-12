@@ -33,13 +33,13 @@ namespace sensors_test
     // Requires libgpiod-dev (Could not get to work on JP4)
     // sudo apt install -y libgpiod-dev
     // gpiochip1 [tegra-gpio-aon] (40 lines)
-    // 17 = (chip0) 288 + 17 + 47 = 352
-    // 17 = (chip1) 248 + 17 + 57 = 322
-    // GPIO_AON SYS, AO, AO_HV, (All on VDD_RTC) AA, BB, CC, DD, EE
-    // gpiochip1: registered GPIOs 335 to 503 on tegra194-gpio (+47 since JP4)
-    // gpiochip1: GPIOs 335-503, parent: platform/2200000.gpio, tegra194-gpio:
-    // gpiochip2: registered GPIOs 305 to 334 on tegra194-gpio-aon (+57 since JP4)
-    // gpiochip2: GPIOs 305-334, parent: platform/c2f0000.gpio, tegra194-gpio-aon
+    // Gpiod uses line numbers to access gpio. The line numbers can be found with `gpioinfo` and cross referenced with the nvidia 
+    // pinmux spreadsheet.
+    // The pinmux spreadsheet can be found here: https://developer.nvidia.com/jetson-nano-pinmux-datasheet
+    // Notes for personal use, these are free GPIO pins.
+    // gpiochip1 127 -- BCM 17 -- J41 Pin 11
+    // gpiochip1 112 -- BCM 18 -- J41 Pin 12
+
     public class Program
     {
         private static readonly byte boardBusId = 8;
@@ -69,11 +69,11 @@ namespace sensors_test
                 Console.WriteLine($"Set PWM Frequencey Board Status: {BoardIO.LastOperationStatus}");
 
                 Console.WriteLine($"Register Drive Motor");
-                IMotorDriver DriveMotor = new MDD10A(BoardIO, 17, HardwareIODriver.PwmChannelRegisters.Pwm2, "DriveMotor");
+                IMotorDriver DriveMotor = new MDD10A(BoardIO, 127, HardwareIODriver.PwmChannelRegisters.Pwm2, "DriveMotor");
                 Console.WriteLine($"Add Drive Motor To Registry");
                 DeviceRegistry.AddDevice(DriveMotor);
                 Console.WriteLine($"Register Turn Motor");
-                IMotorDriver TurningMotor = new MDD10A(BoardIO, 18, HardwareIODriver.PwmChannelRegisters.Pwm1, "TurningMotor");
+                IMotorDriver TurningMotor = new MDD10A(BoardIO, 112, HardwareIODriver.PwmChannelRegisters.Pwm1, "TurningMotor");
                 Console.WriteLine($"Add Turn Motor To Registry");
                 DeviceRegistry.AddDevice(TurningMotor);
 
