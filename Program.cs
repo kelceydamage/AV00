@@ -1,21 +1,15 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.IO;
 // https://github.com/dotnet/iot/blob/main/src/System.Device.Gpio/System/Device/I2c/I2cDevice.cs#L11
 // https://developer.download.nvidia.com/assets/embedded/secure/jetson/xavier/docs/Xavier_TRM_DP09253002.pdf?VakqmUGBQ99wvpu9mQgUOnm_mwq8MupZBel1lXFho98PGkC6gCjYKa58bYSGYUZZYHMpkF-PPS9WNeV_KmsmQxUQX84dYaEQavkufeAuom2ZpN2P8oQ3I1gSljfF-7rzC1sxKAXvgDnQlzdmma_jvCdqtjyKvye5MFmhFtSSG63Huw==&t=eyJscyI6ImdzZW8iLCJsc2QiOiJodHRwczovL3d3dy5nb29nbGUuY29tLyJ9
 // https://github.com/NVIDIA/jetson-gpio/blob/6cab53dc80f8f5ecd6257d90dc7c0c51cb5348a7/lib/python/Jetson/GPIO/gpio_pin_data.py#L321
 // https://forums.developer.nvidia.com/t/gpio-numbers-and-sysfs-names-changed-in-jetpack-5-linux-5-10/218580/7
 // https://forums.developer.nvidia.com/t/gpio-numbers-and-sysfs-names-changed-in-jetpack-5-linux-5-10/218580/3
 // https://jetsonhacks.com/nvidia-jetson-xavier-nx-gpio-header-pinout/
-using System.Device.I2c;
-using sensors_test.Drivers.Sensors;
 using sensors_test.Services;
 using sensors_test.Drivers.IO;
 using sensors_test.Drivers;
 using sensors_test.Drivers.Motors;
 using sensors_test.Controllers.MotorController;
-using System.Device.Gpio;
-using System.Device.Gpio.Drivers;
-using static sensors_test.Drivers.IO.HardwareIODriver;
 
 namespace sensors_test
 {
@@ -43,52 +37,34 @@ namespace sensors_test
     public class Program
     {
         private static readonly byte boardBusId = 8;
-        private static readonly byte boardAddress = 0x10;
-        private static readonly byte MPU9250Address = 0x68;
+        // private static readonly byte MPU9250Address = 0x68;
         // Device may be missing/broken on board
-        private static readonly byte AK8963Address = 0x0C;
-        private static readonly byte BMP280 = 0x77;
-        private static readonly uint pwmFrequency = 18000;
+        // private static readonly byte AK8963Address = 0x0C;
+        // private static readonly byte BMP280 = 0x77;
+        private static readonly int pwmFrequency = 1000;
         private static readonly int GpioControllerId = 1;
 
         public static void Main()
         {
             DeviceRegistryService DeviceRegistry = new();
             ServiceRegistry.AddService(DeviceRegistry);
-            HardwareIODriver BoardIO = new(boardBusId, boardAddress, GpioControllerId);
-            // BoardIO.DetectAddress();
-            BoardIO.Init();
 
-            Console.WriteLine($"Init Board Status: {BoardIO.LastOperationStatus}");
-            Console.WriteLine($"Error Message: {BoardIO.ErrorMessage}");
+            GPIO Gpio = new(GpioControllerId);
+            PCA9685 PwmController = new(boardBusId);
+            PWM ServoBoard = new(PwmController);
+            ServoBoard.SetPwmFrequency(pwmFrequency);
+            IMotorDriver DriveMotor = new MDD10A(112, 8, "DriveMotor");
+            IMotorDriver TurningMotor = new MDD10A(127, 9, "TurningMotor");
 
-            if (BoardIO.LastOperationStatus == BoardStatus.StatusOk)
-            {
-                BoardIO.SetPwmEnable();
-                Console.WriteLine($"Set PWM Enable Board Status: {BoardIO.LastOperationStatus}");
-                BoardIO.SetPwmFrequency(pwmFrequency);
-                Console.WriteLine($"Set PWM Frequencey Board Status: {BoardIO.LastOperationStatus}");
+            Console.WriteLine($"Add Drive Motor To Registry");
+            DeviceRegistry.AddDevice(DriveMotor);
+            Console.WriteLine($"Add Turn Motor To Registry");
+            DeviceRegistry.AddDevice(TurningMotor);
 
-                Console.WriteLine($"Register Drive Motor");
-                IMotorDriver DriveMotor = new MDD10A(BoardIO, 112, HardwareIODriver.PwmChannelRegisters.Pwm2, "DriveMotor");
-                Console.WriteLine($"Add Drive Motor To Registry");
-                DeviceRegistry.AddDevice(DriveMotor);
-                Console.WriteLine($"Register Turn Motor");
-                IMotorDriver TurningMotor = new MDD10A(BoardIO, 127, HardwareIODriver.PwmChannelRegisters.Pwm1, "TurningMotor");
-                Console.WriteLine($"Add Turn Motor To Registry");
-                DeviceRegistry.AddDevice(TurningMotor);
+            PDSGBGearboxMotorController motorController = new(Gpio, ServoBoard, DriveMotor, TurningMotor);
+            Console.WriteLine($"Run Test:");
+            motorController.Test();
 
-                PDSGBGearboxMotorController motorController = new(DriveMotor, TurningMotor);
-                Console.WriteLine($"Run Test:");
-                motorController.Test();
-
-                BoardIO.DisposeGpio();
-            }
-            else
-            {
-                Console.WriteLine($"Board Error: {BoardIO.LastOperationStatus}");
-            }
-            
 
             // ---
             /*

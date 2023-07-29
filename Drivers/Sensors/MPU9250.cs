@@ -1,4 +1,5 @@
 ﻿// Based on https://github.com/kriswiner/MPU9250/blob/master/STM32F401/MPU9250.h
+using sensors_test.Archive;
 using sensors_test.Drivers.IO;
 using System.Device.I2c;
 
@@ -38,23 +39,23 @@ namespace sensors_test.Drivers.Sensors
         private readonly byte gScale = (byte)GScale.GFS_250DPS;
         // Select accelerometer scale
         private readonly byte aScale = (byte)AScale.AFS_2G;
-        private readonly I2cChannelWrapper i2CChannel;
+        private readonly I2cChannel i2CChannel;
 
-        public MPU9250(HardwareIODriver IODriver, byte I2cAddress)
+        public MPU9250(int BusId, byte I2cAddress)
         {
-            i2CChannel = IODriver.CreateI2cChannelInstance(I2cAddress);
+            i2CChannel = new(new I2cConnectionSettings(BusId, I2cAddress));
         }
 
         // x|y|z accel register data returned
         public short[] ReadAccelerometer()
         {
-            return i2CChannel.MergeMSBAndLSB(ReadSensor(accelerometerAddress, accelBuffer));
+            return I2cChannel.MergeMSBAndLSB(ReadSensor(accelerometerAddress, accelBuffer));
         }
 
         // x|y|z gyro register data returned
         public short[] ReadGyroscope()
         {
-            return i2CChannel.MergeMSBAndLSB(ReadSensor(gyroscopeAddress, gyroBuffer));
+            return I2cChannel.MergeMSBAndLSB(ReadSensor(gyroscopeAddress, gyroBuffer));
         }
 
         // temperature register data returned

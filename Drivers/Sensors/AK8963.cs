@@ -1,4 +1,6 @@
-﻿using sensors_test.Drivers.IO;
+﻿using sensors_test.Archive;
+using sensors_test.Drivers.IO;
+using System;
 using System.Collections.Generic;
 using System.Device.I2c;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -18,11 +20,11 @@ namespace sensors_test.Drivers.Sensors
         private readonly byte AK8963ControlAddress = 0x0A;
         private readonly byte AK8963AxisSensitivityAdjustmentXAddress = 0x10;
         private readonly byte mScale = (byte)MScale.MFS_16BITS;
-        private readonly I2cChannelWrapper i2CChannel;
+        private readonly I2cChannel i2CChannel;
 
-        public AK8963(HardwareIODriver IODriver, byte I2cAddress)
+        public AK8963(int BusId, byte I2cAddress)
         {
-            i2CChannel = IODriver.CreateI2cChannelInstance(I2cAddress);
+            i2CChannel = new(new I2cConnectionSettings(BusId, I2cAddress));
         }
 
         public short[] ReadMagnetometer()

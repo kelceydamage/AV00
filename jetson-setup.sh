@@ -11,3 +11,14 @@ echo "export PATH=$PATH:$HOME/dotnet" >> $HOME/.bashrc
 # Grant gpio group acces to GPIO in /sys
 sudo chgrp -R gpio /sys/class/gpio
 sudo chmod -R g+rw /sys/class/gpio
+sudo chgrp -R gpio /sys/class/pwm/pwmchip*/*
+sudo chmod -R g+rw /sys/class/pwm/pwmchip*/*
+
+### Notes: ###
+# Xavier NX JP5
+# pin 15 == PWM 1 == GPIO12 == GPIO3_PCC.04 == D6
+# pin 32 == PWM 4 == GPIO07 == GPIO3_PR.00 == A3 (motor 2)
+# pin 33 == PWM 0 == GPIO13 == GPIO3_PN.01 == D14 (motor 1)
+
+# gpiochip1 127 -- BCM 17 -- J41 Pin 11 == D2 (motor 1)
+# gpiochip1 112 -- BCM 18 -- J41 Pin 12 == D3 (motor 2)

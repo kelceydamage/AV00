@@ -6,8 +6,9 @@ using System;
 using System.Device.Gpio.Drivers;
 using System.Numerics;
 
-namespace sensors_test.Drivers.IO
+namespace sensors_test.Archive
 {
+    /*
     public class HardwareIODriver
     {
         private enum AnalogChannels : byte
@@ -71,10 +72,18 @@ namespace sensors_test.Drivers.IO
         private bool isPwmEnabled = false;
         private byte address;
         public byte BusId;
-        public uint CurrentFrequency;
-        private readonly GpioController Gpio;
+        public int CurrentFrequency;
+        private readonly Gpio Gpio;
         private BoardStatus lastOperationStatus = BoardStatus.StatusOk;
         private I2cChannelWrapper boardI2cChannel;
+        public bool IsPwmEnabled
+        {
+            get
+            {
+                return isPwmEnabled;
+            }
+
+        }
         public BoardStatus LastOperationStatus
         {
             get
@@ -104,7 +113,7 @@ namespace sensors_test.Drivers.IO
             ReadBytes(pidRegister, pidBuffer);
             byte[] vidBuffer = new byte[1];
             ReadBytes(vidRegister, vidBuffer);
-            
+
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
                 if (pidBuffer[0] != defaultPidRegister)
@@ -122,7 +131,7 @@ namespace sensors_test.Drivers.IO
                 {
                     SetPwmDisable();
                     SetPwmDutyCycle(AllPwmRegisters, 0);
-                    SetAdcDisable();  
+                    SetAdcDisable();
                 }
             }
             return lastOperationStatus;
@@ -177,6 +186,7 @@ namespace sensors_test.Drivers.IO
             {
                 isPwmEnabled = false;
             }
+            Thread.Sleep(10);
         }
 
         public void SetPwmEnable()
@@ -188,9 +198,10 @@ namespace sensors_test.Drivers.IO
             {
                 isPwmEnabled = true;
             }
+            Thread.Sleep(10);
         }
 
-        public void SetPwmFrequency(uint frequency)
+        public void SetPwmFrequency(int frequency)
         {
             if (frequency < 1 || frequency > 48000)
             {
@@ -203,8 +214,10 @@ namespace sensors_test.Drivers.IO
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)(frequency >> 8);
                 buffer[1] = (byte)(frequency & 0xff);
+                Console.WriteLine("Setting PWM Frequencey");
+                Console.WriteLine($"buffer[0]: {buffer[0]}, buffer[1]: {buffer[1]}");
                 WriteBytes(pwmFrequencyRegister, buffer);
-                Thread.Sleep(100);
+                Thread.Sleep(10);
                 if (pwmPreviousFlag)
                 {
                     SetPwmEnable();
@@ -213,7 +226,7 @@ namespace sensors_test.Drivers.IO
             }
         }
 
-        public byte SetPwmDutyCycle(byte channelId, byte Duty)
+        public int SetPwmDutyCycle(byte channelId, byte Duty)
         {
             if (Duty < 0 || Duty > 100)
             {
@@ -228,6 +241,7 @@ namespace sensors_test.Drivers.IO
 
         public void SetPwmDutyCycle(byte[] channelId, byte Duty)
         {
+            Console.WriteLine("Setting PWM Duty Cycle From List");
             foreach (byte id in channelId)
             {
                 SetPwmDutyCycle(id, Duty);
@@ -254,7 +268,7 @@ namespace sensors_test.Drivers.IO
             ReadBytes(channelId, buffer);
             if (lastOperationStatus == BoardStatus.StatusOk)
             {
-                return (buffer[0] << 8) | buffer[1];
+                return buffer[0] << 8 | buffer[1];
             }
             return 0;
         }
@@ -377,11 +391,12 @@ namespace sensors_test.Drivers.IO
         {
             short[] merged = new short[3];
 
-            merged[0] = (short)((buffer[0] << 8) | buffer[1]);
-            merged[1] = (short)((buffer[2] << 8) | buffer[3]);
-            merged[2] = (short)((buffer[4] << 8) | buffer[5]);
+            merged[0] = (short)(buffer[0] << 8 | buffer[1]);
+            merged[1] = (short)(buffer[2] << 8 | buffer[3]);
+            merged[2] = (short)(buffer[4] << 8 | buffer[5]);
 
             return merged;
         }
     }
+    */
 }
