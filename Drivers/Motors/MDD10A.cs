@@ -2,7 +2,7 @@
 
 namespace sensors_test.Drivers.Motors
 {
-    public class MDD10A : IMotorDriver
+    public class MDD10A : IMotor
     {
         public short DirectionPin { get; }
         public int PwmChannelId { get; }

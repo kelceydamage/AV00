@@ -53,8 +53,8 @@ namespace sensors_test
             PCA9685 PwmController = new(boardBusId);
             PWM ServoBoard = new(PwmController);
             ServoBoard.SetPwmFrequency(pwmFrequency);
-            IMotorDriver DriveMotor = new MDD10A(112, 8, "DriveMotor");
-            IMotorDriver TurningMotor = new MDD10A(127, 9, "TurningMotor");
+            IMotor DriveMotor = new MDD10A(112, 8, "DriveMotor");
+            IMotor TurningMotor = new MDD10A(127, 9, "TurningMotor");
 
             Console.WriteLine($"Add Drive Motor To Registry");
             DeviceRegistry.AddDevice(DriveMotor);

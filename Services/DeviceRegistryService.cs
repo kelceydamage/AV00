@@ -5,9 +5,9 @@ namespace sensors_test.Services
 
     public class DeviceRegistryService : IService
     {
-        private readonly Dictionary<string, IDeviceDriver> Devices = new();
+        private readonly Dictionary<string, IDevice> Devices = new();
 
-        public void AddDevice(IDeviceDriver Device)
+        public void AddDevice(IDevice Device)
         {
             string key = Device.Name;
             Console.WriteLine($"Adding Device {key}");
@@ -27,7 +27,7 @@ namespace sensors_test.Services
             Devices.Remove(DeviceName);
         }
 
-        public IDeviceDriver GetDevice(string DeviceName)
+        public IDevice GetDevice(string DeviceName)
         {
             if (!Devices.ContainsKey(DeviceName))
             {

@@ -19,12 +19,12 @@ namespace sensors_test.Controllers.MotorController
 
     internal class PDSGBGearboxMotorController
     {
-        private readonly IMotorDriver turningMotor;
-        private readonly IMotorDriver driveMotor;
+        private readonly IMotor turningMotor;
+        private readonly IMotor driveMotor;
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
 
-        public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotorDriver TurningMotor, IMotorDriver DriveMotor)
+        public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
             gpio = Gpio;
             turningMotor = TurningMotor;
@@ -56,7 +56,7 @@ namespace sensors_test.Controllers.MotorController
             HardStop(driveMotor);
         }
 
-        private void RunMotor(IMotorDriver Motor, PinValue Direction, ushort PwmAmount, int BlockingRunTime)
+        private void RunMotor(IMotor Motor, PinValue Direction, ushort PwmAmount, int BlockingRunTime)
         {
             if (Direction != Motor.CurrentDirection)
             {
@@ -72,13 +72,13 @@ namespace sensors_test.Controllers.MotorController
             }
         }
 
-        private void SetDutyAndDirection(IMotorDriver Motor)
+        private void SetDutyAndDirection(IMotor Motor)
         {
             gpio.SafeWritePin(Motor.DirectionPin, Motor.CurrentDirection);
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
         }
 
-        private void GradualStop(IMotorDriver Motor)
+        private void GradualStop(IMotor Motor)
         {
             while (Motor.CurrentPwmAmount > 0)
             {
@@ -93,7 +93,7 @@ namespace sensors_test.Controllers.MotorController
             }
         }
 
-        private void HardStop(IMotorDriver Motor)
+        private void HardStop(IMotor Motor)
         {
             Motor.CurrentPwmAmount = 0;
             SetDutyAndDirection(Motor);

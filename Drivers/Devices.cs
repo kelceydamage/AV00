@@ -2,12 +2,12 @@
 
 namespace sensors_test.Drivers
 {
-    public interface IDeviceDriver
+    public interface IDevice
     {
         public string Name { get; set; }
     }
 
-    public interface IMotorDriver : IDeviceDriver
+    public interface IMotor : IDevice
     {
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
@@ -17,7 +17,7 @@ namespace sensors_test.Drivers
         public short DutyDownCycleIntervalMs { get; }
     }
 
-    public interface IPwmController : IDeviceDriver
+    public interface IPwmController : IDevice
     {
         public int PwmMaxFrequencyHz { get; }
         public int PwmMinFrequencyHz { get; }
