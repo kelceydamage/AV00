@@ -18,6 +18,10 @@ An embedded robotics project using C# and the Nvidia Xavier NX.
 * [ ] Create a basic feedback loop that keeps the robot driving straight.
 * [ ] Remote input/override service.
 
+## TODO - Infra (Next Phase)
+* [ ] Setup a CI/CD pipeline.
+* [ ] Dockerize the application to run in NV containers.
+
 ## TODO - Hardware (Next Phase)
 * [ ] Add an ultrasonic sensor to the robot.
 * [ ] Add a gyro sensor to the robot.
