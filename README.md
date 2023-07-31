@@ -7,16 +7,19 @@ An embedded robotics project using C# and the Nvidia Xavier NX.
 ## Issues
 
 # Version 1 Outstanding Goals
-## TODO - Software (Next Phase)
+## TODO - Embedded Software (Next Phase)
 * [ ] Update the DeviceRegistry to be useful.
 * [ ] Add the MotorController to the ServiceRegistry
 * [ ] Create a telemetry service for the robot.
-* [ ] Create a desktop application to view telemery over WIFI.
 * [ ] Add an ultrasonic sensor to the robot.
 * [ ] Create a basic feedback loop the stops the motors near an obstacle.
 * [ ] Add a gyro sensor to the robot.
 * [ ] Create a basic feedback loop that keeps the robot driving straight.
 * [ ] Remote input/override service.
+
+## TODO - Desktop Software (Next Phase)
+* [ ] Create a desktop application to view telemery over WIFI.
+* [ ] Remote input/override client.
 
 ## TODO - Infra (Next Phase)
 * [ ] Setup a CI/CD pipeline.
