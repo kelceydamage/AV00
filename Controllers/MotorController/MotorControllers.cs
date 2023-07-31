@@ -40,14 +40,16 @@ namespace sensors_test.Controllers.MotorController
             Console.ReadKey();
             Stop();
         }
+
+        // Drive motor exceeds power draw and needs to be capped.
         public void Move(PinValue Direction, int BlockingRunTime = 0)
         {
-            RunMotor(driveMotor, Direction, 4000, BlockingRunTime);
+            RunMotor(driveMotor, Direction, 1024, BlockingRunTime);
         }
 
         public void Turn(PinValue Direction, int BlockingRunTime = 0)
         {
-            RunMotor(turningMotor, Direction, 4000, BlockingRunTime);
+            RunMotor(turningMotor, Direction, 2048, BlockingRunTime);
         }
 
         public void Stop()
