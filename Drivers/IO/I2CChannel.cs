@@ -19,8 +19,10 @@ namespace sensors_test.Drivers.IO
 
         public void WriteBytes(byte register, byte[] buffer)
         {
-            I2c.WriteByte(register);
-            I2c.Write(buffer);
+            byte[] prependedRegister = new byte[buffer.Length + 1];
+            prependedRegister[0] = register;
+            buffer.CopyTo(prependedRegister, 1);
+            I2c.Write(prependedRegister);
         }
 
         public void ReadBytes(byte register, byte[] buffer)

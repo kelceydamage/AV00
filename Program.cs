@@ -34,6 +34,9 @@ namespace sensors_test
     // gpiochip1 127 -- BCM 17 -- J41 Pin 11
     // gpiochip1 112 -- BCM 18 -- J41 Pin 12
 
+
+    // PWM2 on MD10A is driver motor, PWM1 is turning motor
+
     public class Program
     {
         private static readonly byte boardBusId = 8;
@@ -61,7 +64,7 @@ namespace sensors_test
             Console.WriteLine($"Add Turn Motor To Registry");
             DeviceRegistry.AddDevice(TurningMotor);
 
-            PDSGBGearboxMotorController motorController = new(Gpio, ServoBoard, DriveMotor, TurningMotor);
+            PDSGBGearboxMotorController motorController = new(Gpio, ServoBoard, TurningMotor, DriveMotor);
             Console.WriteLine($"Run Test:");
             motorController.Test();
 

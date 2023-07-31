@@ -42,12 +42,12 @@ namespace sensors_test.Controllers.MotorController
         }
         public void Move(PinValue Direction, int BlockingRunTime = 0)
         {
-            RunMotor(driveMotor, Direction, 2048, BlockingRunTime);
+            RunMotor(driveMotor, Direction, 4000, BlockingRunTime);
         }
 
         public void Turn(PinValue Direction, int BlockingRunTime = 0)
         {
-            RunMotor(turningMotor, Direction, 2048, BlockingRunTime);
+            RunMotor(turningMotor, Direction, 4000, BlockingRunTime);
         }
 
         public void Stop()
@@ -74,6 +74,7 @@ namespace sensors_test.Controllers.MotorController
 
         private void SetDutyAndDirection(IMotor Motor)
         {
+            Console.WriteLine($"-- {Motor.Name}: {Motor.PwmChannelId}");
             gpio.SafeWritePin(Motor.DirectionPin, Motor.CurrentDirection);
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
         }

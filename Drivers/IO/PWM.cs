@@ -13,9 +13,9 @@
 
         public void SetPwmFrequency(int Frequency)
         {
-            if (Frequency < pwmController.PwmMinFrequencyHz || Frequency > pwmController.PwmMinFrequencyHz)
+            if (Frequency < pwmController.PwmMinFrequencyHz || Frequency > pwmController.PwmMaxFrequencyHz)
             {
-                throw new ArgumentException($"Frequency must be between {pwmController.PwmMinFrequencyHz} and {pwmController.PwmMinFrequencyHz}");
+                throw new ArgumentException($"Frequency must be between {pwmController.PwmMinFrequencyHz} and {pwmController.PwmMaxFrequencyHz}");
             }
             pwmController.SetFrequency(Frequency);
         }

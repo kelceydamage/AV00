@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Device.I2c;
 using System.Device.Pwm;
 using System.Linq;
@@ -12,13 +13,22 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using static System.Device.Gpio.Drivers.RaspberryPi3Driver;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace sensors_test.Drivers.IO
 {
     public class PCA9685 : IPwmController
     {
-
+        // Mode one register
+        // 0x80 binary: 10000000 RESET enabled (Reset all PWM channels)
+        // 0x40 binary: 01000000 EXTCLK enabled (Use EXTCLK pin clock)
+        // 0x20 binary: 00100000 AI enabled (Auto increment register address)
+        // 0x10 binary: 00010000 SLEEP enabled (Low power mode. Oscillator off)
+        // 0x08 binary: 00001000 SUB1 enabled (Respond to I2C subaddress 1)
+        // 0x04 binary: 00000100 SUB2 enabled (Respond to I2C subaddress 2)
+        // 0x02 binary: 00000010 SUB3 enabled (Respond to I2C subaddress 3)
+        // 0x01 binary: 00000001 ALLCALL enabled (Respond to I2C address 0x70)
         static readonly byte i2cAddress = 0x40;
         //static readonly byte i2cAddressMask = 0x3F;
         //static readonly byte i2cProxyAddress = 0xE0;
@@ -31,14 +41,17 @@ namespace sensors_test.Drivers.IO
         //static readonly byte subAddress2Register = 0x03;
         //static readonly byte subAddress3Register = 0x04;
         //static readonly byte allCallRegister = 0x05;
-        static readonly byte led0Register = 0x06; // Start of LEDx regs, 4B per reg, 2B on phase, 2B off phase, little-endian. 16 channels
+        static readonly byte led0RegisterOnLow = 0x06; // Start of LEDx regs, 4B per reg, 2B on phase, 2B off phase, little-endian. 16 channels
+        static readonly byte led0RegisterOnHigh = 0x07;
+        static readonly byte led0RegisterOffLow = 0x08;
+        static readonly byte led0RegisterOffHigh = 0x09;
         static readonly byte prescaleRegister = 0xFE;
         //static readonly byte allLedRegister = 0xFA;
 
         // Mode1 register values
-        static readonly byte mode1Restart = 0x80;
+        static readonly byte mode1Restart = 0x80; // Set to restart all PWM channels after software reset binary: 10000000 enabled
         //static readonly byte mode1ExternalClock = 0x10;
-        //static readonly byte mode1AutoIncrement = 0x20;
+        static readonly byte mode1AutoIncrement = 0x20;
         static readonly byte mode1Sleep = 0x10;
         //static readonly byte mode1SubAddress1 = 0x08;
         //static readonly byte mode1SubAddress2 = 0x04;
@@ -101,8 +114,8 @@ namespace sensors_test.Drivers.IO
             pwmReadChannels = new byte[channelCount];
             for (int i = 0; i < channelCount; i++)
             {
-                pwmWriteChannels[i] = (byte)(led0Register + (i * 0x04));
-                pwmReadChannels[i] = (byte)(led0Register + (i << 2));
+                pwmWriteChannels[i] = (byte)(led0RegisterOnLow + (i * 0x04));
+                pwmReadChannels[i] = (byte)(led0RegisterOnLow + (i << 2));
             }
             Reset();
         }
@@ -131,18 +144,63 @@ namespace sensors_test.Drivers.IO
         // value that ultimately controls the PWM frequency produced.
         public void SetFrequency(float Frequency) // Hz
         {
+            int prescalerValue = (int)(referenceClockSpeed / referenceClockDivider / Frequency) -1;
+            Console.WriteLine($"Setting Frequency: {Frequency}, Prescaler: {prescalerValue}");
+            int prescale = (int)(Math.Floor(prescalerValue + 0.5));
+            Console.WriteLine($"Final Prescale: {prescale}");
+            if (prescale > 255) prescale = 255;
+            if (prescale < 3) prescale = 3;
+
+            byte[] mode1ReadBuffer = new byte[1]; // old mode1 value
+            i2c.ReadBytes(mode1Register, mode1ReadBuffer);
+            Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer[0]}");
+            byte mode1NewValue = (byte)((mode1ReadBuffer[0] & 0x7F) | mode1Sleep);
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {mode1NewValue}");
+            i2c.WriteBytes(mode1Register, new byte[] { mode1NewValue }); // go to sleep
+
+            Console.WriteLine($"Writing Buffer At: {prescaleRegister} -> {prescale}");
+            i2c.WriteBytes(prescaleRegister, new byte[] { (byte)prescale }); // set prescale
+
+            byte[] prescaleReadBuffer2 = new byte[1];
+            i2c.ReadBytes(prescaleRegister, prescaleReadBuffer2);
+            Console.WriteLine($"Reading Buffer At: {prescaleRegister} -> {prescaleReadBuffer2[0]}");
+            // Clear Sleep
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> 0");
+            i2c.WriteBytes(mode1Register, new byte[] { mode1AutoIncrement });
+
+            byte[] mode1ReadBuffer2 = new byte[1];
+            Thread.Sleep(1000);
+            i2c.ReadBytes(mode1Register, mode1ReadBuffer2);
+            Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer2[0]}");
+            // restart
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {(byte)((mode1ReadBuffer[0] & ~mode1Sleep ) | mode1Restart)}");
+            i2c.WriteBytes(mode1Register, new byte[] { (byte)((mode1ReadBuffer[0] & ~mode1Sleep ) | mode1Restart) }); // set old mode
+
+            i2c.ReadBytes(mode1Register, mode1ReadBuffer2);
+            Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer2[0]}");
+            /*
             int prescalerValue = (int)(referenceClockSpeed / (referenceClockDivider * Frequency)) - 1;
             if (prescalerValue > 255) prescalerValue = 255;
             if (prescalerValue < 3) prescalerValue = 3;
 
+            Console.WriteLine($"Setting Frequency: {Frequency}, Prescaler: {prescalerValue}");
             byte[] mode1ReadBuffer = new byte[1];
+            
             i2c.ReadBytes(mode1Register, mode1ReadBuffer);
+
+            Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer[0]}");
             // The PRE_SCALE register can only be set when the SLEEP bit of MODE1 register is set to logic 1.
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {(byte)((mode1ReadBuffer[0] & ~mode1Restart) | mode1Sleep)}");
             i2c.WriteBytes(mode1Register, new byte[] { (byte)((mode1ReadBuffer[0] & ~mode1Restart) | mode1Sleep) });
+            Console.WriteLine($"Writing Buffer At: {prescaleRegister} -> {(byte)prescalerValue}");
             i2c.WriteBytes(prescaleRegister, new byte[] { (byte)prescalerValue });
-            // It takes 500us max for the oscillator to be up and running once SLEEP bit has been set to logic 0.
-            i2c.WriteBytes(mode1Register, new byte[] { (byte)((mode1ReadBuffer[0] & ~mode1Sleep) | mode1Restart) });
             Thread.Sleep(1);
+            // It takes 500us max for the oscillator to be up and running once SLEEP bit has been set to logic 0.
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {(byte)((mode1ReadBuffer[0] & ~mode1Sleep) | mode1Restart)}");
+            i2c.WriteBytes(mode1Register, new byte[] { (byte)((mode1ReadBuffer[0] & ~mode1Sleep) | mode1Restart) });
+            Console.WriteLine($"Frequency Set");
+            Thread.Sleep(1);
+            */
         }
 
         public void SetChannelPwmAll(ushort PwmAmount)
@@ -158,8 +216,22 @@ namespace sensors_test.Drivers.IO
         {
             ValidateChannelId(ChannelId);
 
-            GetPhaseCycle(ChannelId, PwmAmount, out ushort phaseBegin, out ushort phaseEnd);
+            byte[] setPwmBuffer = new byte[4]
+            {
+                (byte)(led0RegisterOnLow + 4 * ChannelId),
+                (byte)(led0RegisterOnHigh + 4 * ChannelId),
+                (byte)(led0RegisterOffLow + 4 * ChannelId),
+                (byte)(led0RegisterOffHigh + 4 * ChannelId),
+            };
+            i2c.WriteBytes(setPwmBuffer[0], new byte[] { (0x00 & 0xff) });
+            i2c.WriteBytes(setPwmBuffer[1], new byte[] { (0x00 >> 8) });
+            i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(PwmAmount & 0xff) });
+            i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(PwmAmount >> 8) });
 
+            /*
+            GetPhaseCycle(ChannelId, PwmAmount, out ushort phaseBegin, out ushort phaseEnd);
+            Console.WriteLine($"Setting Channel: {ChannelId}, PwmAmount: {PwmAmount}, PhaseBegin: {phaseBegin}, PhaseEnd: {phaseEnd}");
+            Console.WriteLine($"Channel Address: {pwmWriteChannels[ChannelId]}");
             i2c.WriteBytes(
                 pwmWriteChannels[ChannelId],
                 new byte[]
@@ -170,6 +242,7 @@ namespace sensors_test.Drivers.IO
                     (byte)(phaseBegin >> 8),    // high
                 }
             );
+            */
         }
 
         private void ValidateChannelId(int ChannelId)
