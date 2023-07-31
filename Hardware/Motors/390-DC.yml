@@ -1,0 +1,12 @@
+name: "unknown"
+type: "390"
+rpm: 6300
+voltage: 12
+soft-caps:
+    stop-pwm: 0.125         # @12v ~ 1.5v
+    start-pwm: 0.5          # @12v ~ 6v
+    run-pwm: 0.95           # @12v ~ 11.4v
+hard-caps:
+    stop-pwm: 0.0458        # @12v ~ 0.55v
+    start-pwm: 0.625        # @12v ~ 7.5v
+    run-pwm: 1.0            # @12v ~ 12v

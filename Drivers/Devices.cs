@@ -1,4 +1,5 @@
-﻿using System.Device.Gpio;
+﻿using sensors_test.Drivers.Motors;
+using System.Device.Gpio;
 
 namespace sensors_test.Drivers
 {
@@ -13,8 +14,13 @@ namespace sensors_test.Drivers
         public int PwmChannelId { get; }
         public PinValue CurrentDirection { get; set; }
         public ushort CurrentPwmAmount { get; set; }
-        public byte DutyDownCycleStep { get; }
-        public short DutyDownCycleIntervalMs { get; }
+        public float DutyCycleChangeStepPct { get; }
+        public short DutyCycleChangeIntervalMs { get; }
+        public string Type { get; }
+        public float Voltage { get; }
+        public int Rpm { get; }
+        public PwmCaps PwmSoftCaps { get; }
+        public PwmCaps PwmHardCaps { get; }
     }
 
     public interface IPwmController : IDevice
@@ -23,6 +29,7 @@ namespace sensors_test.Drivers
         public int PwmMinFrequencyHz { get; }
         public int PwmBitDepth { get; }
         public int PwmChannelCount { get; }
+        public float PwmMaxValue { get; }
         public void SetFrequency(float Frequency);
         public void Reset();
         public void SetChannelPwm(int ChannelId, ushort PwmAmount);

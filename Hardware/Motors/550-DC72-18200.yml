@@ -1,0 +1,12 @@
+name: "K-3937B2D3"
+type: "550"
+rpm: 18200
+voltage: 7.2
+soft-caps:
+    stop-pwm: 0.0625        # @12v ~ 0.75v
+    start-pwm: 0.25         # @12v ~ 3v
+    run-pwm: 0.5            # @12v ~ 6v
+hard-caps:
+    stop-pwm: 0.0458        # @12v ~ 0.55v
+    start-pwm: 0.3425       # @12v ~ 4v
+    run-pwm: 1.0            # @12v ~ 12v

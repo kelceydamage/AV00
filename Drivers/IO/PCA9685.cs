@@ -1,20 +1,7 @@
 ﻿// based on https://github.com/NachtRaveVL/PCA9685-Arduino/blob/master/src/PCA9685.cpp
+// Data Sheet: https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
 
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Device.I2c;
-using System.Device.Pwm;
-using System.Linq;
-using System.Net;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-using static System.Device.Gpio.Drivers.RaspberryPi3Driver;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace sensors_test.Drivers.IO
 {
@@ -99,6 +86,7 @@ namespace sensors_test.Drivers.IO
         public int PwmMinFrequencyHz { get { return 24; } }
         public int PwmBitDepth { get { return 12; } }
         public int PwmChannelCount { get { return channelCount; } }
+        public float PwmMaxValue { get { return referenceClockDivider - 1; } }
 
         public PCA9685(int I2cBus, int ChannelCount = 16)
         {
@@ -223,6 +211,7 @@ namespace sensors_test.Drivers.IO
                 (byte)(led0RegisterOffLow + 4 * ChannelId),
                 (byte)(led0RegisterOffHigh + 4 * ChannelId),
             };
+            //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
             i2c.WriteBytes(setPwmBuffer[0], new byte[] { (0x00 & 0xff) });
             i2c.WriteBytes(setPwmBuffer[1], new byte[] { (0x00 >> 8) });
             i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(PwmAmount & 0xff) });

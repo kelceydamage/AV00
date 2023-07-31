@@ -4,6 +4,7 @@
     {
         private readonly IPwmController pwmController;
         private readonly ushort maxPwmValue;
+        public float PwmMaxValue { get => pwmController.PwmMaxValue; }
 
         public PWM(IPwmController PwmController)
         {
