@@ -1,42 +1,44 @@
-﻿namespace sensors_test.Drivers.IO
+﻿using sensors_test.Drivers.IO;
+
+namespace sensors_test.Drivers
 {
     public class PWM
     {
-        private readonly IPwmController pwmController;
+        private readonly IPwmGenerator pwmGenerator;
         private readonly ushort maxPwmValue;
-        public float PwmMaxValue { get => pwmController.PwmMaxValue; }
+        public float PwmMaxValue { get => pwmGenerator.PwmMaxValue; }
 
-        public PWM(IPwmController PwmController)
+        public PWM(IPwmGenerator PwmGenerator)
         {
-            pwmController = PwmController;
-            maxPwmValue = (ushort)(Math.Pow(2, pwmController.PwmBitDepth) - 1);
+            pwmGenerator = PwmGenerator;
+            maxPwmValue = (ushort)(Math.Pow(2, pwmGenerator.PwmBitDepth) - 1);
         }
 
         public void SetPwmFrequency(int Frequency)
         {
-            if (Frequency < pwmController.PwmMinFrequencyHz || Frequency > pwmController.PwmMaxFrequencyHz)
+            if (Frequency < pwmGenerator.PwmMinFrequencyHz || Frequency > pwmGenerator.PwmMaxFrequencyHz)
             {
-                throw new ArgumentException($"Frequency must be between {pwmController.PwmMinFrequencyHz} and {pwmController.PwmMaxFrequencyHz}");
+                throw new ArgumentException($"Frequency must be between {pwmGenerator.PwmMinFrequencyHz} and {pwmGenerator.PwmMaxFrequencyHz}");
             }
-            pwmController.SetFrequency(Frequency);
+            pwmGenerator.SetFrequency(Frequency);
         }
 
         public void SetChannelPWM(int ChannelId, ushort PwmAmount)
         {
-            if (ChannelId < 0 || ChannelId > pwmController.PwmChannelCount)
+            if (ChannelId < 0 || ChannelId > pwmGenerator.PwmChannelCount)
             {
-                throw new ArgumentException($"ChannelId must be between 0 and {pwmController.PwmChannelCount}");
+                throw new ArgumentException($"ChannelId must be between 0 and {pwmGenerator.PwmChannelCount}");
             }
             if (PwmAmount < 0 || PwmAmount > maxPwmValue)
             {
-                throw new Exception($"PwmAmount must be between 0 and {maxPwmValue} for this {pwmController.PwmBitDepth}-bit controller");
+                throw new Exception($"PwmAmount must be between 0 and {maxPwmValue} for this {pwmGenerator.PwmBitDepth}-bit controller");
             }
-            pwmController.SetChannelPwm(ChannelId, PwmAmount);
+            pwmGenerator.SetChannelPwm(ChannelId, PwmAmount);
         }
 
         public void Reset()
         {
-            pwmController.Reset();
+            pwmGenerator.Reset();
         }
     }
 }

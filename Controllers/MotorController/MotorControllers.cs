@@ -1,5 +1,5 @@
-﻿using sensors_test.Drivers;
-using System.Device.Gpio;
+﻿using System.Device.Gpio;
+using sensors_test.Drivers.Motors;
 using sensors_test.Drivers.IO;
 
 namespace sensors_test.Controllers.MotorController

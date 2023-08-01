@@ -1,5 +1,4 @@
 ﻿// Based on https://github.com/kriswiner/MPU9250/blob/master/STM32F401/MPU9250.h
-using sensors_test.Archive;
 using sensors_test.Drivers.IO;
 using System.Device.I2c;
 

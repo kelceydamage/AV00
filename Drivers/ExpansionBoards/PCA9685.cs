@@ -5,7 +5,7 @@ using System.Device.I2c;
 
 namespace sensors_test.Drivers.IO
 {
-    public class PCA9685 : IPwmController
+    public class PCA9685 : IPwmGenerator
     {
         // Mode one register
         // 0x80 binary: 10000000 RESET enabled (Reset all PWM channels)

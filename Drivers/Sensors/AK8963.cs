@@ -1,9 +1,5 @@
-﻿using sensors_test.Archive;
-using sensors_test.Drivers.IO;
-using System;
-using System.Collections.Generic;
+﻿using sensors_test.Drivers.IO;
 using System.Device.I2c;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace sensors_test.Drivers.Sensors
 {

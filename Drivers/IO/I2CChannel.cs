@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Device.I2c;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Device.I2c;
 
 namespace sensors_test.Drivers.IO
 {

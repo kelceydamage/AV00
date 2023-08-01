@@ -7,9 +7,9 @@
 // https://jetsonhacks.com/nvidia-jetson-xavier-nx-gpio-header-pinout/
 using sensors_test.Services;
 using sensors_test.Drivers.IO;
-using sensors_test.Drivers;
 using sensors_test.Drivers.Motors;
 using sensors_test.Controllers.MotorController;
+using sensors_test.Drivers.ExpansionBoards;
 
 namespace sensors_test
 {
