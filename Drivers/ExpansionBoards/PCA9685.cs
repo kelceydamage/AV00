@@ -2,8 +2,9 @@
 // Data Sheet: https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
 
 using System.Device.I2c;
+using sensors_test.Drivers.IO;
 
-namespace sensors_test.Drivers.IO
+namespace sensors_test.Drivers.ExpansionBoards
 {
     public class PCA9685 : IPwmGenerator
     {
@@ -102,7 +103,7 @@ namespace sensors_test.Drivers.IO
             pwmReadChannels = new byte[channelCount];
             for (int i = 0; i < channelCount; i++)
             {
-                pwmWriteChannels[i] = (byte)(led0RegisterOnLow + (i * 0x04));
+                pwmWriteChannels[i] = (byte)(led0RegisterOnLow + i * 0x04);
                 pwmReadChannels[i] = (byte)(led0RegisterOnLow + (i << 2));
             }
             Reset();
@@ -132,9 +133,9 @@ namespace sensors_test.Drivers.IO
         // value that ultimately controls the PWM frequency produced.
         public void SetFrequency(float Frequency) // Hz
         {
-            int prescalerValue = (int)(referenceClockSpeed / referenceClockDivider / Frequency) -1;
+            int prescalerValue = (int)(referenceClockSpeed / referenceClockDivider / Frequency) - 1;
             Console.WriteLine($"Setting Frequency: {Frequency}, Prescaler: {prescalerValue}");
-            int prescale = (int)(Math.Floor(prescalerValue + 0.5));
+            int prescale = (int)Math.Floor(prescalerValue + 0.5);
             Console.WriteLine($"Final Prescale: {prescale}");
             if (prescale > 255) prescale = 255;
             if (prescale < 3) prescale = 3;
@@ -142,7 +143,7 @@ namespace sensors_test.Drivers.IO
             byte[] mode1ReadBuffer = new byte[1]; // old mode1 value
             i2c.ReadBytes(mode1Register, mode1ReadBuffer);
             Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer[0]}");
-            byte mode1NewValue = (byte)((mode1ReadBuffer[0] & 0x7F) | mode1Sleep);
+            byte mode1NewValue = (byte)(mode1ReadBuffer[0] & 0x7F | mode1Sleep);
             Console.WriteLine($"Writing Buffer At: {mode1Register} -> {mode1NewValue}");
             i2c.WriteBytes(mode1Register, new byte[] { mode1NewValue }); // go to sleep
 
@@ -161,8 +162,8 @@ namespace sensors_test.Drivers.IO
             i2c.ReadBytes(mode1Register, mode1ReadBuffer2);
             Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer2[0]}");
             // restart
-            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {(byte)((mode1ReadBuffer[0] & ~mode1Sleep ) | mode1Restart)}");
-            i2c.WriteBytes(mode1Register, new byte[] { (byte)((mode1ReadBuffer[0] & ~mode1Sleep ) | mode1Restart) }); // set old mode
+            Console.WriteLine($"Writing Buffer At: {mode1Register} -> {(byte)(mode1ReadBuffer[0] & ~mode1Sleep | mode1Restart)}");
+            i2c.WriteBytes(mode1Register, new byte[] { (byte)(mode1ReadBuffer[0] & ~mode1Sleep | mode1Restart) }); // set old mode
 
             i2c.ReadBytes(mode1Register, mode1ReadBuffer2);
             Console.WriteLine($"Reading Buffer At: {mode1Register} -> {mode1ReadBuffer2[0]}");
@@ -212,8 +213,8 @@ namespace sensors_test.Drivers.IO
                 (byte)(led0RegisterOffHigh + 4 * ChannelId),
             };
             //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
-            i2c.WriteBytes(setPwmBuffer[0], new byte[] { (0x00 & 0xff) });
-            i2c.WriteBytes(setPwmBuffer[1], new byte[] { (0x00 >> 8) });
+            i2c.WriteBytes(setPwmBuffer[0], new byte[] { 0x00 & 0xff });
+            i2c.WriteBytes(setPwmBuffer[1], new byte[] { 0x00 >> 8 });
             i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(PwmAmount & 0xff) });
             i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(PwmAmount >> 8) });
 
@@ -250,9 +251,9 @@ namespace sensors_test.Drivers.IO
             byte[] pwmReadBuffer = new byte[4];
             i2c.ReadBytes(pwmReadChannels[ChannelId], pwmReadBuffer);
             ushort phaseBegin, phaseEnd;
-            phaseEnd = (ushort)pwmReadBuffer[0];
+            phaseEnd = pwmReadBuffer[0];
             phaseEnd |= (ushort)(pwmReadBuffer[1] << 8);
-            phaseBegin = (ushort)pwmReadBuffer[2];
+            phaseBegin = pwmReadBuffer[2];
             phaseBegin |= (ushort)(pwmReadBuffer[3] << 8);
 
             if (phaseEnd >= pwmFull)
@@ -267,7 +268,7 @@ namespace sensors_test.Drivers.IO
             {
                 return (ushort)(phaseEnd - phaseBegin);
             }
-            return (ushort)((phaseEnd + pwmFull) - phaseBegin);
+            return (ushort)(phaseEnd + pwmFull - phaseBegin);
         }
 
         public byte GetLastI2cError()
@@ -285,7 +286,7 @@ namespace sensors_test.Drivers.IO
             phaseBegin = 0;
             if (phaseBalancer == PhaseBalancerSettings.Linear)
             {
-                phaseBegin = (ushort)((ushort)(ChannelId * ((4096 / 16) / 16)) & pwmMask);
+                phaseBegin = (ushort)((ushort)(ChannelId * (4096 / 16 / 16)) & pwmMask);
             }
             if (pwmAmount == 0)
             {
@@ -298,7 +299,7 @@ namespace sensors_test.Drivers.IO
             }
             else
             {
-                phaseEnd = (ushort)((phaseBegin + pwmAmount) & pwmMask);
+                phaseEnd = (ushort)(phaseBegin + pwmAmount & pwmMask);
             }
         }
 

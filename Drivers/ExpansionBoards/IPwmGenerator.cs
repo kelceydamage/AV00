@@ -1,6 +1,6 @@
-﻿namespace sensors_test.Drivers.IO
+﻿namespace sensors_test.Drivers.ExpansionBoards
 {
-    public interface IPwmController : IDevice
+    public interface IPwmGenerator : IDevice
     {
         public int PwmMaxFrequencyHz { get; }
         public int PwmMinFrequencyHz { get; }
