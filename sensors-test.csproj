@@ -9,8 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--<PackageReference Include="NetMQ" Version="4.0.1.13" />-->
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.1.0" />
     <PackageReference Include="NetMQ" Version="4.0.1.13" />
-    <PackageReference Include="System.Device.Gpio" Version="2.2.0" />
+    <PackageReference Include="System.Device.Gpio" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
