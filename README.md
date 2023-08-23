@@ -1,7 +1,7 @@
 # AV00
 An embedded robotics project using C# and the Nvidia Xavier NX.
 
-Relies on [AVOO-Transport](https://github.com/kelceydamage/AV00-Transport) for inter-service communication.
+Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for inter-service communication.
 
 ## Current Design Overview
 ![Untitled drawing (1)](https://github.com/kelceydamage/sensors-test/assets/16090219/1d6d7f56-4ac8-4e3f-91a6-4593bf0f7f37)
