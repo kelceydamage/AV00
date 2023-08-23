@@ -8,6 +8,7 @@ An embedded robotics project using C# and the Nvidia Xavier NX.
 
 # Version 1 Outstanding Goals
 ## TODO - Embedded Software (Next Phase)
+* [x] Create a transport layer to allow services to communicate with each other.
 * [ ] Update the DeviceRegistry to be useful.
 * [ ] Add the MotorController to the ServiceRegistry
 * [ ] Create a telemetry service for the robot.
