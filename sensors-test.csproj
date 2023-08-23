@@ -19,4 +19,8 @@
     <Folder Include="Python\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\Transport.csproj" />
+  </ItemGroup>
+
 </Project>
