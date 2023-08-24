@@ -17,7 +17,7 @@ namespace sensors_test.Controllers.MotorController
         public static PinValue Right { get => right; }
     }
 
-    internal class PDSGBGearboxMotorController
+    internal class PDSGBGearboxMotorController: IMotorController
     {
         private readonly IMotor turningMotor;
         private readonly IMotor driveMotor;

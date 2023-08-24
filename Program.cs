@@ -72,7 +72,7 @@ namespace sensors_test
             ThreadStart transportRelayThreadDelegate = new(TransportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
 
-            ServiceBusClient serviceBusClient = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            ServiceBusClient serviceBusClient = new(ConfigurationManager.ConnectionStrings);
             serviceBusClient.RegisterServiceEventCallback("DriveService", TestCallback);
             Console.WriteLine($"Starting Transport Relay");
             transportRelayThread.Start();
@@ -81,7 +81,7 @@ namespace sensors_test
             TaskEvent myTask = new("DriveService", myData);
             serviceBusClient.PushTask(myTask);
 
-            serviceBusClient.CollectEventReceipts();
+            serviceBusClient.ProcessPendingEvents();
 
             Console.WriteLine("Press any key to exit");
             Console.ReadKey();

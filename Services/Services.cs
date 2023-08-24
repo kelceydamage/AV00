@@ -13,7 +13,7 @@ namespace sensors_test.Services
 
     public static class ServiceRegistry
     {
-        public static Dictionary<string, IService> Registry = new();
+        private readonly static Dictionary<string, IService> Registry = new();
         public static void AddService<T>(T Service) where T : IService
         {
             string key = typeof(T).Name;
