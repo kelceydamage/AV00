@@ -4,6 +4,7 @@ namespace sensors_test.Services
 {
     public class DeviceRegistryService : IService
     {
+        public string ServiceName { get => "DeviceRegistryService"; }
         private readonly Dictionary<string, IDevice> Devices = new();
 
         public void AddDevice(IDevice Device)
@@ -24,6 +25,11 @@ namespace sensors_test.Services
             if (!Devices.TryGetValue(DeviceName, out IDevice? device))
                 throw new Exception($"Device {DeviceName} not found in registry");
             return device;
+        }
+
+        public void Start()
+        {
+            Console.WriteLine("Device Registry Service Started");
         }
     }
 }

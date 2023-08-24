@@ -15,12 +15,10 @@ using System.Configuration;
 using Transport.Client;
 using NetMQ;
 using Transport.Messages;
-using System.ServiceModel.Channels;
 
 namespace sensors_test
 {
     using DataDict = Dictionary<string, object>;
-    using MQMessageBuffer = List<(NetMQMessage, bool?)>;
 
     public static class DEBUG
     {
@@ -56,52 +54,61 @@ namespace sensors_test
         private static readonly int pwmFrequency = 1000;
         private static readonly int GpioControllerId = 1;
 
-        private static bool TestCallback(NetMQMessage message)
+        private static bool TestCallback(NetMQMessage MQMessage)
         {
-            Console.WriteLine($"Test Callback: {message}");
+            Console.WriteLine($"PROGRAM: [Received] receipt {MQMessage[2].ConvertToString()} status={Enum.Parse(typeof(EnumTaskEventProcessingState), MQMessage[3].ConvertToString())}");
             return true;
         }
 
         public static void Main()
         {
             Console.WriteLine("Starting");
-            DeviceRegistryService DeviceRegistry = new();
-            ServiceRegistry.AddService(DeviceRegistry);
+            DeviceRegistryService deviceRegistry = new();
+            ServiceRegistry.AddService(deviceRegistry);
 
-            ServiceBusRelay TransportRelay = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
-            ThreadStart transportRelayThreadDelegate = new(TransportRelay.ForwardMessages);
+            ServiceBusRelay transportRelay = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            ThreadStart transportRelayThreadDelegate = new(transportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
+
+            /* -- Only for linux systems
+            PWM pwmDriver = new(new PCA9685(boardBusId));
+            pwmDriver.SetPwmFrequency(pwmFrequency);
+            PDSGBGearboxMotorController motorController = new(
+                new GPIO(GpioControllerId),
+                pwmDriver,
+                new MDD10A55072(112, 8, "DriveMotor"),
+                new MDD10A39012(127, 9, "TurningMotor")
+            );
+            */
+            DriveService driveService = new(null /* motorController */, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            ThreadStart driveServiceThreadDelegate = new(driveService.Start);
+            Thread driveServiceThread = new(driveServiceThreadDelegate);
+            ServiceRegistry.AddService(driveService);
 
             ServiceBusClient serviceBusClient = new(ConfigurationManager.ConnectionStrings);
             serviceBusClient.RegisterServiceEventCallback("DriveService", TestCallback);
             Console.WriteLine($"Starting Transport Relay");
             transportRelayThread.Start();
+            driveServiceThread.Start();
 
             DataDict myData = new() { { "message", "Hello World" } };
             TaskEvent myTask = new("DriveService", myData);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            serviceBusClient.ProcessPendingEvents();
+            var i = 0;
+            while(!Console.KeyAvailable)
+            {
+                serviceBusClient.ProcessPendingEvents();
+                Thread.Sleep(500);
 
-            Console.WriteLine("Press any key to exit");
-            Console.ReadKey();
+                var previousCursorY = Console.GetCursorPosition().Top;
+                Console.SetCursorPosition(0, Console.WindowTop + Console.WindowHeight - 1);
+                Console.Write($"* program loop: {i}");
+                Console.SetCursorPosition(0, previousCursorY);
+                i++;
+            }
             Environment.Exit(0);
-            //GPIO Gpio = new(GpioControllerId);
-            //PCA9685 PwmController = new(boardBusId);
-            //PWM ServoBoard = new(PwmController);
-            //ServoBoard.SetPwmFrequency(pwmFrequency);
-            //IMotor DriveMotor = new MDD10A55072 (112, 8, "DriveMotor");
-            //IMotor TurningMotor = new MDD10A39012(127, 9, "TurningMotor");
-
-            //Console.WriteLine($"Add Drive Motor To Registry");
-            //DeviceRegistry.AddDevice(DriveMotor);
-            //Console.WriteLine($"Add Turn Motor To Registry");
-            //DeviceRegistry.AddDevice(TurningMotor);
-
-            //PDSGBGearboxMotorController motorController = new(Gpio, ServoBoard, TurningMotor, DriveMotor);
-            //Console.WriteLine($"Run Test:");
-            //motorController.Test();
-
 
             // ---
             /*
