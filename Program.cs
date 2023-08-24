@@ -1,15 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-// https://github.com/dotnet/iot/blob/main/src/System.Device.Gpio/System/Device/I2c/I2cDevice.cs#L11
-// https://developer.download.nvidia.com/assets/embedded/secure/jetson/xavier/docs/Xavier_TRM_DP09253002.pdf?VakqmUGBQ99wvpu9mQgUOnm_mwq8MupZBel1lXFho98PGkC6gCjYKa58bYSGYUZZYHMpkF-PPS9WNeV_KmsmQxUQX84dYaEQavkufeAuom2ZpN2P8oQ3I1gSljfF-7rzC1sxKAXvgDnQlzdmma_jvCdqtjyKvye5MFmhFtSSG63Huw==&t=eyJscyI6ImdzZW8iLCJsc2QiOiJodHRwczovL3d3dy5nb29nbGUuY29tLyJ9
-// https://github.com/NVIDIA/jetson-gpio/blob/6cab53dc80f8f5ecd6257d90dc7c0c51cb5348a7/lib/python/Jetson/GPIO/gpio_pin_data.py#L321
-// https://forums.developer.nvidia.com/t/gpio-numbers-and-sysfs-names-changed-in-jetpack-5-linux-5-10/218580/7
-// https://forums.developer.nvidia.com/t/gpio-numbers-and-sysfs-names-changed-in-jetpack-5-linux-5-10/218580/3
-// https://jetsonhacks.com/nvidia-jetson-xavier-nx-gpio-header-pinout/
-using sensors_test.Services;
-using sensors_test.Drivers.IO;
-using sensors_test.Drivers.Motors;
-using sensors_test.Controllers.MotorController;
-using sensors_test.Drivers.ExpansionBoards;
+﻿using sensors_test.Services;
 using Transport.Relay;
 using System.Configuration;
 using Transport.Client;
@@ -29,20 +18,6 @@ namespace sensors_test
             Console.WriteLine($"Read int Z: {results[2]}");
         }
     }
-
-    // Digital Port: IO expansion board offers 28 groups (D0-D27) of digital ports that are led out via Raspberry Pi ports GPIO0~GPIO27 (BCM codes)
-    // Requires libgpiod-dev (Could not get to work on JP4)
-    // sudo apt install -y libgpiod-dev
-    // gpiochip1 [tegra-gpio-aon] (40 lines)
-    // Gpiod uses line numbers to access gpio. The line numbers can be found with `gpioinfo` and cross referenced with the nvidia 
-    // pinmux spreadsheet.
-    // The pinmux spreadsheet can be found here: https://developer.nvidia.com/jetson-nano-pinmux-datasheet
-    // Notes for personal use, these are free GPIO pins.
-    // gpiochip1 127 -- BCM 17 -- J41 Pin 11
-    // gpiochip1 112 -- BCM 18 -- J41 Pin 12
-
-
-    // PWM2 on MD10A is driver motor, PWM1 is turning motor
 
     public class Program
     {
@@ -109,8 +84,6 @@ namespace sensors_test
                 i++;
             }
             Environment.Exit(0);
-
-            // ---
             /*
             I2cConnectionSettings MPU9250Settings = new(busId, MPU9250Address);
             MPU9250 mpu9250 = new(MPU9250Settings);
