@@ -4,6 +4,10 @@ using System.Configuration;
 using Transport.Client;
 using NetMQ;
 using Transport.Messages;
+using sensors_test.Controllers.MotorController;
+using sensors_test.Drivers.IO;
+using sensors_test.Drivers.Motors;
+using sensors_test.Drivers.ExpansionBoards;
 
 namespace sensors_test
 {
@@ -45,7 +49,6 @@ namespace sensors_test
             ThreadStart transportRelayThreadDelegate = new(transportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
 
-            /* -- Only for linux systems
             PWM pwmDriver = new(new PCA9685(boardBusId));
             pwmDriver.SetPwmFrequency(pwmFrequency);
             PDSGBGearboxMotorController motorController = new(
@@ -54,8 +57,7 @@ namespace sensors_test
                 new MDD10A55072(112, 8, "DriveMotor"),
                 new MDD10A39012(127, 9, "TurningMotor")
             );
-            */
-            DriveService driveService = new(null /* motorController */, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
             ThreadStart driveServiceThreadDelegate = new(driveService.Start);
             Thread driveServiceThread = new(driveServiceThreadDelegate);
             ServiceRegistry.AddService(driveService);
