@@ -40,7 +40,7 @@ namespace AV00.Communication
         private Guid id;
         public MotorCommandData Data { get => data; }
         private MotorCommandData data;
-        private readonly bool isNull = false;
+        private bool isNull = false;
 
         public TaskEvent(string ServiceName, MotorCommandData Data, Guid? TaskId = null)
         {
@@ -82,6 +82,7 @@ namespace AV00.Communication
             serviceName = WireMessage[0].ConvertToString();
             id = Guid.Parse(WireMessage[2].ConvertToString());
             data = JsonSerializer.Deserialize<MotorCommandData>(WireMessage[3].ConvertToString());
+            isNull = false;
         }
 
         public TaskEventReceipt GenerateReceipt(EnumTaskEventProcessingState ProcessingState)
