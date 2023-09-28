@@ -57,6 +57,11 @@ namespace AV00
                 new MDD10A55072(112, 8, "DriveMotor"),
                 new MDD10A39012(127, 9, "TurningMotor")
             );
+            foreach (var setting in ConfigurationManager.AppSettings)
+            {
+                Console.WriteLine($"Setting: {setting}");
+            }
+
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
             ThreadStart driveServiceThreadDelegate = new(driveService.Start);
             Thread driveServiceThread = new(driveServiceThreadDelegate);
