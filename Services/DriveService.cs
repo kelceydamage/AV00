@@ -39,9 +39,10 @@ namespace AV00.Services
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.ServiceName}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Type}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Id}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data}");
+            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Command}");
+            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Direction}");
 
-            switch(taskEvent.Data.Command)
+            switch (taskEvent.Data.Command)
             {
                 case "move":
                     motorController?.Move(taskEvent.Data.Direction,taskEvent.Data.PwmAmount);
@@ -57,7 +58,7 @@ namespace AV00.Services
             }
 
             Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {taskEvent.Id}");
-            taskExecutorClient.PublishReceipt(taskEvent);
+            taskExecutorClient.PublishReceipt(taskEvent.GenerateReceipt(EnumTaskEventProcessingState.Processed));
             return true;
         }
     }
