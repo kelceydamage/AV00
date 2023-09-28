@@ -1,6 +1,6 @@
-﻿using sensors_test.Drivers;
+﻿using AV00.Drivers;
 
-namespace sensors_test.Services
+namespace AV00.Services
 {
     public class DeviceRegistryService : IService
     {

@@ -1,6 +1,6 @@
 ﻿using System.Device.I2c;
 
-namespace sensors_test.Drivers.IO
+namespace AV00.Drivers.IO
 {
     public class I2cChannel
     {

@@ -1,7 +1,7 @@
 ﻿using System.Device.Gpio.Drivers;
 using System.Device.Gpio;
 
-namespace sensors_test.Drivers.IO
+namespace AV00.Drivers.IO
 {
     public class GPIO
     {

@@ -1,7 +1,7 @@
-﻿using sensors_test.Drivers.IO;
+﻿using AV00.Drivers.IO;
 using System.Device.I2c;
 
-namespace sensors_test.Drivers.Sensors
+namespace AV00.Drivers.Sensors
 {
     public class AK8963
     {

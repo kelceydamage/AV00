@@ -1,4 +1,4 @@
-﻿namespace sensors_test.Services
+﻿namespace AV00.Services
 {
     public static class ServiceRegistry
     {

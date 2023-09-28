@@ -1,6 +1,6 @@
-﻿using sensors_test.Drivers.ExpansionBoards;
+﻿using AV00.Drivers.ExpansionBoards;
 
-namespace sensors_test.Drivers.IO
+namespace AV00.Drivers.IO
 {
     public class PWM
     {

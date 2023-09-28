@@ -1,6 +1,6 @@
 ﻿using System.Device.Gpio;
 
-namespace sensors_test.Controllers.MotorController
+namespace AV00.Controllers.MotorController
 {
     public interface IMotorController
     {

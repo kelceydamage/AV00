@@ -2,9 +2,9 @@
 // Data Sheet: https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
 
 using System.Device.I2c;
-using sensors_test.Drivers.IO;
+using AV00.Drivers.IO;
 
-namespace sensors_test.Drivers.ExpansionBoards
+namespace AV00.Drivers.ExpansionBoards
 {
     public class PCA9685 : IPwmGenerator
     {

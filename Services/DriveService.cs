@@ -1,12 +1,10 @@
-﻿using sensors_test.Controllers.MotorController;
+﻿using AV00.Controllers.MotorController;
 using System.Collections.Specialized;
 using System.Configuration;
-using System.Device.Gpio;
-using Transport.Client;
 using AV00.Communication;
 using Transport.Messages;
 
-namespace sensors_test.Services
+namespace AV00.Services
 {
     internal class DriveService: IService
     {
@@ -19,7 +17,7 @@ namespace sensors_test.Services
         {
             taskExecutorClient = new(Connections);
             motorController = MotorController;
-            updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception());
+            updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception("Missing Key config value: DriveServiceUpdateFrequency"));
             taskExecutorClient.RegisterServiceEventCallback(ServiceName, OnTaskEventCallback);
         }
 

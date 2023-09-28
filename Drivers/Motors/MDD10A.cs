@@ -1,6 +1,6 @@
 ﻿using System.Device.Gpio;
 
-namespace sensors_test.Drivers.Motors
+namespace AV00.Drivers.Motors
 {
     public readonly struct PwmCaps
     {

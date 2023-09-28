@@ -1,4 +1,4 @@
-﻿namespace sensors_test.Drivers.ExpansionBoards
+﻿namespace AV00.Drivers.ExpansionBoards
 {
     public interface IPwmGenerator : IDevice
     {

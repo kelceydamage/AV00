@@ -1,15 +1,15 @@
-﻿using sensors_test.Services;
+﻿using AV00.Services;
 using Transport.Relay;
 using System.Configuration;
 using Transport.Client;
 using NetMQ;
-using sensors_test.Controllers.MotorController;
-using sensors_test.Drivers.IO;
-using sensors_test.Drivers.Motors;
-using sensors_test.Drivers.ExpansionBoards;
+using AV00.Controllers.MotorController;
+using AV00.Drivers.IO;
+using AV00.Drivers.Motors;
+using AV00.Drivers.ExpansionBoards;
 using AV00.Communication;
 
-namespace sensors_test
+namespace AV00
 {
     using DataDict = Dictionary<string, object>;
 

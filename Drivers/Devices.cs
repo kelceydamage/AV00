@@ -1,4 +1,4 @@
-﻿namespace sensors_test.Drivers
+﻿namespace AV00.Drivers
 {
     public interface IDevice
     {

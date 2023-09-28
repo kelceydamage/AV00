@@ -1,8 +1,8 @@
 ﻿using System.Device.Gpio;
-using sensors_test.Drivers.Motors;
-using sensors_test.Drivers.IO;
+using AV00.Drivers.Motors;
+using AV00.Drivers.IO;
 
-namespace sensors_test.Controllers.MotorController
+namespace AV00.Controllers.MotorController
 {
     public class MotorDirection
     {
