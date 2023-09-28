@@ -2,6 +2,7 @@
 using Transport.Messages;
 using Transport.Generics;
 using Transport.Client;
+using System.Collections.Specialized;
 
 namespace AV00.Communication
 {
@@ -17,9 +18,9 @@ namespace AV00.Communication
             ServiceBusProducer = new PushClient(ServiceBusClientSocket);
         }
 
-        public ServiceBusClient(ConnectionStringSettingsCollection Connections) : base(
+        public ServiceBusClient(ConnectionStringSettingsCollection Connections, NameValueCollection Settings) : base(
             new SubscriberClient($"{Connections["ReceiptEventSocket"].ConnectionString}"),
-            short.Parse(Connections["TransportMessageFrameCount"].ConnectionString)
+            short.Parse(Settings["TransportMessageFrameCount"] ?? throw new Exception())
         )
         {
             ServiceBusProducer = new PushClient(Connections["ServiceBusClientSocket"].ConnectionString);
@@ -43,9 +44,9 @@ namespace AV00.Communication
             ServiceBusProducer = new($">{ServiceBusClientSocket}");
         }
 
-        public TaskExecutorClient(ConnectionStringSettingsCollection Connections) : base(
+        public TaskExecutorClient(ConnectionStringSettingsCollection Connections, NameValueCollection Settings) : base(
             new SubscriberClient($">{Connections["TaskEventSocket"].ConnectionString}"),
-            short.Parse(Connections["TransportMessageFrameCount"].ConnectionString)
+            short.Parse(Settings["TransportMessageFrameCount"] ?? throw new Exception())
         )
         {
             ServiceBusProducer = new($">{Connections["ServiceBusClientSocket"].ConnectionString}");

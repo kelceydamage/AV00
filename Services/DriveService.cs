@@ -15,15 +15,9 @@ namespace AV00.Services
 
         public DriveService(IMotorController? MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
-            foreach (var setting in Settings)
-            {
-                Console.WriteLine($"Setting: {setting}");
-            }
-            Console.WriteLine($"DriveServiceUpdateFrequency: {Settings["DriveServiceUpdateFrequency"]}");
-            taskExecutorClient = new(Connections);
+            taskExecutorClient = new(Connections, Settings);
             motorController = MotorController;
-            updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception("Missing Key config value: DriveServiceUpdateFrequency"));
-            Console.WriteLine($"updateFrequency: {updateFrequency}");
+            updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception());
             taskExecutorClient.RegisterServiceEventCallback(ServiceName, OnTaskEventCallback);
         }
 
