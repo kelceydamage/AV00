@@ -3,11 +3,11 @@ using Transport.Relay;
 using System.Configuration;
 using Transport.Client;
 using NetMQ;
-using Transport.Messages;
 using sensors_test.Controllers.MotorController;
 using sensors_test.Drivers.IO;
 using sensors_test.Drivers.Motors;
 using sensors_test.Drivers.ExpansionBoards;
+using AV00.Communication;
 
 namespace sensors_test
 {
@@ -68,8 +68,13 @@ namespace sensors_test
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            DataDict myData = new() { { "message", "Hello World" } };
-            TaskEvent myTask = new("DriveService", myData);
+            MotorCommandData motorCommand = new("move", MotorDirection.Forwards, 1024);
+            TaskEvent myTask = new("DriveService", motorCommand);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
+            serviceBusClient.PushTask(myTask);
+
+            motorCommand = new("move", MotorDirection.Forwards, 0);
+            myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 

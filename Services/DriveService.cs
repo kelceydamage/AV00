@@ -1,8 +1,9 @@
-﻿using NetMQ;
-using sensors_test.Controllers.MotorController;
+﻿using sensors_test.Controllers.MotorController;
 using System.Collections.Specialized;
 using System.Configuration;
+using System.Device.Gpio;
 using Transport.Client;
+using AV00.Communication;
 using Transport.Messages;
 
 namespace sensors_test.Services
@@ -32,14 +33,29 @@ namespace sensors_test.Services
             }
         }
 
-        private bool OnTaskEventCallback(NetMQMessage MQMessage)
+        private bool OnTaskEventCallback(TransportMessage WireMessage)
         {
             TaskEvent taskEvent = new();
-            taskEvent.FromNetMQMessage(MQMessage);
+            taskEvent.Deserialize(WireMessage);
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.ServiceName}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Type}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Id}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data}");
+
+            switch(taskEvent.Data.Command)
+            {
+                case "move":
+                    motorController?.Move(taskEvent.Data.Direction,taskEvent.Data.PwmAmount);
+                    break;
+                case "turn":
+                    motorController?.Turn(taskEvent.Data.Direction, taskEvent.Data.PwmAmount);
+                    break;
+                case "stop":
+                    motorController?.Stop();
+                    break;
+                default:
+                    break;
+            }
 
             Console.WriteLine($"DRIVER-SERVICE: [Executing] TaskEvent {taskEvent.Data}");
             motorController?.Test();
