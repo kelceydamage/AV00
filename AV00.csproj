@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>sensors_test</RootNamespace>
+    <RootNamespace>AV00</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Transport\Transport.csproj" />
+    <ProjectReference Include="..\AV00-Transport\AV00-Transport.csproj" />
   </ItemGroup>
 
 </Project>

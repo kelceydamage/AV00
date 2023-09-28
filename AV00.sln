@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sensors-test", "sensors-test.csproj", "{D7534BDC-6037-4292-A640-231BA9D0F095}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AV00", "AV00.csproj", "{D7534BDC-6037-4292-A640-231BA9D0F095}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOT-Tools", "..\IOT-Tools\IOT-Tools.csproj", "{155470EA-F153-4321-AED8-E4363C3F4201}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transport", "..\Transport\Transport.csproj", "{53585EDD-5C2A-49A9-AA1B-EA54F038B54A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AV00-Transport", "..\AV00-Transport\AV00-Transport.csproj", "{53585EDD-5C2A-49A9-AA1B-EA54F038B54A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
