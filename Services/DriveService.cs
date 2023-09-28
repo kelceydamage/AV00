@@ -34,6 +34,8 @@ namespace AV00.Services
 
         private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
+            Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3]}");
+            Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3].ConvertToString()}");
             TaskEvent taskEvent = new();
             taskEvent.Deserialize(WireMessage);
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.ServiceName}");
@@ -41,6 +43,7 @@ namespace AV00.Services
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Id}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Command}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Direction}");
+            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.PwmAmount}");
 
             switch (taskEvent.Data.Command)
             {
