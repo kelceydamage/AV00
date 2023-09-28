@@ -41,6 +41,9 @@ namespace sensors_test.Services
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Id}");
             Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data}");
 
+            Console.WriteLine($"DRIVER-SERVICE: [Executing] TaskEvent {taskEvent.Data}");
+            motorController?.Test();
+
             Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {taskEvent.Id}");
             taskExecutorClient.PublishReceipt(taskEvent);
             return true;
