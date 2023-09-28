@@ -1,4 +1,5 @@
-﻿using System.Device.Gpio;
+﻿using NetMQ;
+using System.Device.Gpio;
 using System.Text.Json;
 using Transport.Messages;
 
@@ -8,8 +9,8 @@ namespace AV00.Communication
     {
         public const short FrameCount = 4;
         public EnumEventType Type { get; }
-        public TransportMessage Serialize();
-        public void Deserialize(TransportMessage WireMessage);
+        public NetMQMessage Serialize();
+        public void Deserialize(NetMQMessage WireMessage);
     }
 
     [Serializable]
@@ -62,13 +63,13 @@ namespace AV00.Communication
             data = new MotorCommandData("null", PinValue.Low, 0);
         }
 
-        public override TransportMessage Serialize()
+        public override NetMQMessage Serialize()
         {
             if (isNull)
             {
                 throw new Exception("Null task can not be serialized");
             }
-            TransportMessage WireMessage = new();
+            NetMQMessage WireMessage = new();
             WireMessage.Append(ServiceName);
             WireMessage.Append(Type.ToString());
             WireMessage.Append(Id.ToString());
@@ -76,7 +77,7 @@ namespace AV00.Communication
             return WireMessage;
         }
 
-        public override void Deserialize(TransportMessage WireMessage)
+        public override void Deserialize(NetMQMessage WireMessage)
         {
             serviceName = WireMessage[0].ConvertToString();
             id = Guid.Parse(WireMessage[2].ConvertToString());
@@ -110,9 +111,9 @@ namespace AV00.Communication
             processingState = ProcessingState;
         }
 
-        public override TransportMessage Serialize()
+        public override NetMQMessage Serialize()
         {
-            TransportMessage WireMessage = new();
+            NetMQMessage WireMessage = new();
             WireMessage.Append(ServiceName);
             WireMessage.Append(Type.ToString());
             WireMessage.Append(Id.ToString());
@@ -120,7 +121,7 @@ namespace AV00.Communication
             return WireMessage;
         }
 
-        public override void Deserialize(TransportMessage WireMessage)
+        public override void Deserialize(NetMQMessage WireMessage)
         {
             serviceName = WireMessage[0].ConvertToString();
             id = Guid.Parse(WireMessage[2].ConvertToString());

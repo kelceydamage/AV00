@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using AV00.Communication;
 using Transport.Messages;
+using NetMQ;
 
 namespace AV00.Services
 {
@@ -31,7 +32,7 @@ namespace AV00.Services
             }
         }
 
-        private bool OnTaskEventCallback(TransportMessage WireMessage)
+        private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
             TaskEvent taskEvent = new();
             taskEvent.Deserialize(WireMessage);
