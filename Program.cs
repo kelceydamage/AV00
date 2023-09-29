@@ -54,8 +54,8 @@ namespace AV00
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A55072(112, 8, "DriveMotor"),
-                new MDD10A39012(127, 9, "TurningMotor")
+                new MDD10A39012(127, 9, "TurningMotor"),
+                new MDD10A55072(112, 8, "DriveMotor")
             );
 
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
