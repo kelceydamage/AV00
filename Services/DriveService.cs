@@ -89,7 +89,16 @@ namespace AV00.Services
         private void ExecutionControl(TaskEvent CurrentTask)
         {
             IMotor activeMotor = motorController.GetMotorByCommand(CurrentTask.Data.Command);
-            if (activeMotor.IsReserved)
+            if (CurrentTask.Data.Mode == EnumExecutionMode.Override)
+            {
+                CancelAllTasks();
+                TasksInProgress.Add(CurrentTask.Id, CurrentTask);
+                activeMotor.IsReserved = true;
+                var task = Execute(CurrentTask.Data);
+                activeMotor.IsReserved = false;
+                task.ContinueWith(t => CompleteTask(CurrentTask.Id));
+            }
+            else if (activeMotor.IsReserved)
             {
                 while (activeMotor.IsReserved)
                 {
@@ -102,7 +111,6 @@ namespace AV00.Services
                 TasksInProgress.Add(CurrentTask.Id, CurrentTask);
                 activeMotor.IsReserved = true;
                 var task = Execute(CurrentTask.Data);
-                task.Wait();
                 activeMotor.IsReserved = false;
                 task.ContinueWith(t => CompleteTask(CurrentTask.Id));
             }
@@ -110,16 +118,6 @@ namespace AV00.Services
             {
                 TasksInProgress.Add(CurrentTask.Id, CurrentTask);
                 var task = Execute(CurrentTask.Data);
-                task.ContinueWith(t => CompleteTask(CurrentTask.Id));
-            }
-            else if (CurrentTask.Data.Mode == EnumExecutionMode.Override)
-            {
-                CancelAllTasks();
-                TasksInProgress.Add(CurrentTask.Id, CurrentTask);
-                activeMotor.IsReserved = true;
-                var task = Execute(CurrentTask.Data);
-                task.Wait();
-                activeMotor.IsReserved = false;
                 task.ContinueWith(t => CompleteTask(CurrentTask.Id));
             }
         }
