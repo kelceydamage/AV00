@@ -8,6 +8,7 @@ using AV00.Drivers.IO;
 using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
 using AV00.Communication;
+using AV00.Shared;
 
 namespace AV00
 {
@@ -74,7 +75,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0);
+            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.NonBlocking);
             myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
