@@ -1,6 +1,7 @@
 ﻿using NetMQ;
 using System.Device.Gpio;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Transport.Messages;
 
 namespace AV00.Communication
@@ -16,13 +17,14 @@ namespace AV00.Communication
     [Serializable]
     public readonly struct MotorCommandData
     {
-        public readonly PinValue Direction { get => direction; }
+        public PinValue Direction { get => direction; }
         private readonly PinValue direction;
-        public readonly ushort PwmAmount { get => pwmAmount; }
+        public ushort PwmAmount { get => pwmAmount; }
         private readonly ushort pwmAmount;
-        public readonly string Command { get => command; }
+        public string Command { get => command; }
         private readonly string command;
 
+        [JsonConstructor]
         public MotorCommandData(string Command, PinValue Direction, ushort PwmAmount)
         {
             command = Command;
