@@ -27,6 +27,16 @@ namespace AV00.Controllers.MotorController
         Null,
     }
 
+    public class CancellationToken
+    {
+        public bool IsCancellationRequested
+        { 
+            get => isCancellationRequested;
+            set => isCancellationRequested = value;
+        }
+        private bool isCancellationRequested = false;
+    }
+
     [Serializable]
     public readonly struct MotorCommandData
     {
@@ -38,6 +48,8 @@ namespace AV00.Controllers.MotorController
         private readonly EnumMotorCommands command;
         public EnumExecutionMode Mode { get => mode; }
         private readonly EnumExecutionMode mode;
+        public CancellationToken CancellationToken { get => cancellationToken; }
+        private readonly CancellationToken cancellationToken;
 
         [JsonConstructor]
         public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
@@ -46,6 +58,7 @@ namespace AV00.Controllers.MotorController
             direction = Direction;
             pwmAmount = PwmAmount;
             mode = Mode;
+            cancellationToken = new CancellationToken();
         }
     }
 
@@ -65,6 +78,11 @@ namespace AV00.Controllers.MotorController
             servoBoardController = ServoBoardController;
             MotorRegistry.Add(EnumMotorCommands.Move, driveMotor);
             MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
+        }
+
+        public IMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
+        {
+            return MotorRegistry[MotorCommand];
         }
 
         public void Test()
@@ -93,43 +111,38 @@ namespace AV00.Controllers.MotorController
         // Compatability API
         public void Move(MotorCommandData MotorRequest)
         {
-            RunMotor(MotorRequest);
+            Run(MotorRequest);
         }
 
         // Compatability API
         public void Turn(MotorCommandData MotorRequest)
         {
-            RunMotor(MotorRequest);
+            Run(MotorRequest);
         }
 
         // Compatability API
-        public void Stop(MotorCommandData MotorRequest)
+        public void Stop(MotorCommandData MotorRequest) 
         {
-            HardStop(turningMotor, MotorRequest.Mode);
-            HardStop(driveMotor, MotorRequest.Mode);
+            HardStop(MotorRequest);
         }
 
-        // Execution control goals:
-        // If blocking, do not allow motor to be used until lock has expired
-        // If non-blocking, queue or blend the new command with the current command
-        // If override, stop the current command and run the new command
-        private void RunMotor(MotorCommandData MotorRequest)
+        public void Run(MotorCommandData MotorRequest)
         {
             IMotor RequestedMotor = MotorRegistry[MotorRequest.Command];
             WriteLogFile(RequestedMotor, MotorRequest);
             if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
             {
-                GradualStop(RequestedMotor);
+                GradualStop(RequestedMotor, MotorRequest);
             }
             RequestedMotor.CurrentDirection = MotorRequest.Direction;
             if (MotorRequest.PwmAmount == RequestedMotor.CurrentPwmAmount) { return; }
             else if (MotorRequest.PwmAmount > RequestedMotor.CurrentPwmAmount)
             {
-                Accelerate(RequestedMotor, MotorRequest.PwmAmount);
+                Accelerate(RequestedMotor, MotorRequest);
             }
             else if (MotorRequest.PwmAmount < RequestedMotor.CurrentPwmAmount)
             {
-                Decelerate(RequestedMotor, MotorRequest.PwmAmount);
+                Decelerate(RequestedMotor, MotorRequest);
             }
         }
 
@@ -143,50 +156,58 @@ namespace AV00.Controllers.MotorController
             if (Motor.CurrentPwmAmount == 0) Motor.IsActive = false;
         }
 
-        private void GradualStop(IMotor Motor)
+        private void GradualStop(IMotor Motor, MotorCommandData MotorRequest)
         {
-            Decelerate(Motor, 0);
+            Decelerate(Motor, MotorRequest);
         }
 
-        private void Decelerate(IMotor Motor, ushort TargetPwm)
+        // A cancelled Decelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
+        // between motor commands, and a quicker response time
+        private void Decelerate(IMotor Motor, MotorCommandData MotorRequest)
         {
-            if (TargetPwm >= Motor.CurrentPwmAmount) { return; }
+            ushort targetPwm = MotorRequest.PwmAmount;
+            if (targetPwm >= Motor.CurrentPwmAmount) { return; }
             ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
-            if (TargetPwm < stopAmount) { TargetPwm = stopAmount; }
+            if (targetPwm < stopAmount) { targetPwm = stopAmount; }
             ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
-            Console.WriteLine($"-- Decelerate: from={Motor.CurrentPwmAmount}, to={TargetPwm}, steps={pwmChangeAmount}");
-            while (Motor.CurrentPwmAmount > TargetPwm)
+            Console.WriteLine($"-- Decelerate: from={Motor.CurrentPwmAmount}, to={targetPwm}, steps={pwmChangeAmount}");
+            while (Motor.CurrentPwmAmount > targetPwm)
             {
+                if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }
                 Motor.CurrentPwmAmount -= pwmChangeAmount;
-                if (Motor.CurrentPwmAmount < TargetPwm) { Motor.CurrentPwmAmount = TargetPwm; }
+                if (Motor.CurrentPwmAmount < targetPwm) { Motor.CurrentPwmAmount = targetPwm; }
                 if (Motor.CurrentPwmAmount == stopAmount) { Motor.CurrentPwmAmount = 0; };
                 SetDutyAndDirection(Motor);
                 Thread.Sleep(Motor.DutyCycleChangeIntervalMs);
             }
         }
 
-        private void Accelerate(IMotor Motor, ushort TargetPwm)
+        // A cancelled Accelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
+        // between motor commands, and a quicker response time
+        private void Accelerate(IMotor Motor, MotorCommandData MotorRequest)
         {
+            ushort targetPwm = MotorRequest.PwmAmount;
             ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
             if (Motor.CurrentPwmAmount < stopAmount) { Motor.CurrentPwmAmount = stopAmount; }
-            if (TargetPwm <= Motor.CurrentPwmAmount) { return; }
+            if (targetPwm <= Motor.CurrentPwmAmount) { return; }
             ushort runAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.RunPwm * servoBoardController.PwmMaxValue);
-            if (TargetPwm > runAmount) { TargetPwm = runAmount; }
+            if (targetPwm > runAmount) { targetPwm = runAmount; }
             ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
-            Console.WriteLine($"-- Accelerate: from={Motor.CurrentPwmAmount}, to={TargetPwm}, steps={pwmChangeAmount}");
-            while (Motor.CurrentPwmAmount < TargetPwm)
+            Console.WriteLine($"-- Accelerate: from={Motor.CurrentPwmAmount}, to={targetPwm}, steps={pwmChangeAmount}");
+            while (Motor.CurrentPwmAmount < targetPwm)
             {
+                if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }
                 Motor.CurrentPwmAmount += pwmChangeAmount;
-                if (Motor.CurrentPwmAmount > TargetPwm) { Motor.CurrentPwmAmount = TargetPwm; }
+                if (Motor.CurrentPwmAmount > targetPwm) { Motor.CurrentPwmAmount = targetPwm; }
                 SetDutyAndDirection(Motor);
                 Thread.Sleep(Motor.DutyCycleChangeIntervalMs);
             }
         }
 
-        private void HardStop(IMotor Motor, EnumExecutionMode Mode)
+        private void HardStop(MotorCommandData MotorRequest)
         {
-            Motor.CurrentPwmAmount = 0;
-            SetDutyAndDirection(Motor);
+            MotorRegistry[MotorRequest.Command].CurrentPwmAmount = 0;
+            SetDutyAndDirection(MotorRegistry[MotorRequest.Command]);
         }
     }
 }

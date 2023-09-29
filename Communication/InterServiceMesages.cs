@@ -117,7 +117,8 @@ namespace AV00.Communication
     {
         Unprocessed,
         Processing,
-        Processed,
-        Error
+        Completed,
+        Error,
+        Cancelled
     }
 }
