@@ -1,4 +1,5 @@
 ﻿using System.Device.Gpio;
+using AV00.Shared;
 using AV00.Drivers.Motors;
 using AV00.Drivers.IO;
 
@@ -40,21 +41,21 @@ namespace AV00.Controllers.MotorController
             }
             Console.WriteLine("New Test -----------------");
             Console.WriteLine("-- Move Forwads");
-            Move(MotorDirection.Forwards, 1024);
+            Move(MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
             Thread.Sleep(1000);
             Console.WriteLine("-- Move Backwards");
-            Move(MotorDirection.Backwards, 1024);
+            Move(MotorDirection.Backwards, 1024, EnumExecutionMode.Blocking);
             Thread.Sleep(1000);
-            Move(MotorDirection.Backwards, 0);
+            Move(MotorDirection.Backwards, 0, EnumExecutionMode.Blocking);
             Console.WriteLine("-- Rotate Left");
-            Turn(MotorDirection.Left, 1024);
+            Turn(MotorDirection.Left, 1024, EnumExecutionMode.Blocking);
             Thread.Sleep(1000);
             Console.WriteLine("-- Rotate Right");
-            Turn(MotorDirection.Right, 1024);
+            Turn(MotorDirection.Right, 1024, EnumExecutionMode.Blocking);
             Thread.Sleep(1000);
-            Turn(MotorDirection.Right, 0);
+            Turn(MotorDirection.Right, 0, EnumExecutionMode.Blocking);
             Console.WriteLine("-- All Stop");
-            Stop();
+            Stop(EnumExecutionMode.Blocking);
 
             Console.WriteLine($"{turningMotor.Name} Current PWM: {turningMotor.CurrentPwmAmount}");
             Console.WriteLine($"{driveMotor.Name} Current PWM: {driveMotor.CurrentPwmAmount}");
@@ -62,23 +63,23 @@ namespace AV00.Controllers.MotorController
             Console.WriteLine($"{driveMotor.Name} - Test Complete -----------------");
         }
 
-        public void Move(PinValue Direction, ushort PwmAmount)
+        public void Move(PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
         {
-            RunMotor(driveMotor, Direction, PwmAmount);
+            RunMotor(driveMotor, Direction, PwmAmount, Mode);
         }
 
-        public void Turn(PinValue Direction, ushort PwmAmount)
+        public void Turn(PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
         {
-            RunMotor(turningMotor, Direction, PwmAmount);
+            RunMotor(turningMotor, Direction, PwmAmount, Mode);
         }
 
-        public void Stop()
+        public void Stop(EnumExecutionMode Mode)
         {
-            HardStop(turningMotor);
-            HardStop(driveMotor);
+            HardStop(turningMotor, Mode);
+            HardStop(driveMotor, Mode);
         }
 
-        private void RunMotor(IMotor Motor, PinValue Direction, ushort PwmAmount)
+        private void RunMotor(IMotor Motor, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
         {
             using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
             {
@@ -148,7 +149,7 @@ namespace AV00.Controllers.MotorController
             }
         }
 
-        private void HardStop(IMotor Motor)
+        private void HardStop(IMotor Motor, EnumExecutionMode Mode)
         {
             Motor.CurrentPwmAmount = 0;
             SetDutyAndDirection(Motor);

@@ -48,13 +48,13 @@ namespace AV00.Services
             switch (taskEvent.Data.Command)
             {
                 case "move":
-                    motorController?.Move(taskEvent.Data.Direction,taskEvent.Data.PwmAmount);
+                    motorController?.Move(taskEvent.Data.Direction,taskEvent.Data.PwmAmount, taskEvent.Data.Mode);
                     break;
                 case "turn":
-                    motorController?.Turn(taskEvent.Data.Direction, taskEvent.Data.PwmAmount);
+                    motorController?.Turn(taskEvent.Data.Direction, taskEvent.Data.PwmAmount, taskEvent.Data.Mode);
                     break;
                 case "stop":
-                    motorController?.Stop();
+                    motorController?.Stop(taskEvent.Data.Mode);
                     break;
                 default:
                     break;

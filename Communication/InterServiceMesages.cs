@@ -1,4 +1,5 @@
-﻿using NetMQ;
+﻿using AV00.Shared;
+using NetMQ;
 using System.Device.Gpio;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,13 +24,16 @@ namespace AV00.Communication
         private readonly ushort pwmAmount;
         public string Command { get => command; }
         private readonly string command;
+        public EnumExecutionMode Mode { get => mode; }
+        private readonly EnumExecutionMode mode;
 
         [JsonConstructor]
-        public MotorCommandData(string Command, PinValue Direction, ushort PwmAmount)
+        public MotorCommandData(string Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
         {
             command = Command;
             direction = Direction;
             pwmAmount = PwmAmount;
+            mode = Mode;
         }
     }
 
