@@ -1,10 +1,11 @@
-﻿using AV00.Drivers.Motors;
+﻿using AV00.Controllers.MotorController;
+using AV00.Drivers.Motors;
 
 namespace AV00.Controllers.MotorController
 {
     public interface IMotorController
     {
-        public IMotor GetMotorByCommand(EnumMotorCommands MotorCommand);
+        public QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand);
         public void Test();
         // Compatability API
         public void Move(MotorCommandData MotorRequest);

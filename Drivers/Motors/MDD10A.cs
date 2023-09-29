@@ -18,8 +18,6 @@ namespace AV00.Drivers.Motors
 
     public class MDD10A55072 : IMotor
     {
-        public bool IsReserved { get; set; } = false;
-        public bool IsActive { get; set; } = false;
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public float DutyCycleChangeStepPct { get; } = 0.01f;
@@ -44,8 +42,6 @@ namespace AV00.Drivers.Motors
 
     public class MDD10A39012 : IMotor
     {
-        public bool IsReserved { get; set; } = false;
-        public bool IsActive { get; set; } = false;
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public float DutyCycleChangeStepPct { get; } = 0.01f;

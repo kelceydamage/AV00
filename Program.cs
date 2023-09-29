@@ -36,7 +36,7 @@ namespace AV00
 
         private static bool TestCallback(NetMQMessage MQMessage)
         {
-            Console.WriteLine($"PROGRAM: [Received] receipt {MQMessage[2].ConvertToString()} status={Enum.Parse(typeof(EnumTaskEventProcessingState), MQMessage[3].ConvertToString())}");
+            Console.WriteLine($"PROGRAM: [Received] receipt {MQMessage[3].ConvertToString()}");
             return true;
         }
 
@@ -70,23 +70,19 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandData motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.NonBlocking);
-            TaskEvent myTask = new("DriveService", motorCommand);
+            MotorEvent myTask = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.NonBlocking);
-            myTask = new("DriveService", motorCommand);
+            myTask = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
-            myTask = new("DriveService", motorCommand);
+            myTask = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
-            myTask = new("DriveService", motorCommand);
+            myTask = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 

@@ -5,6 +5,7 @@ using AV00.Communication;
 using NetMQ;
 using AV00.Shared;
 using AV00.Drivers.Motors;
+using Transport.Messages;
 
 namespace AV00.Services
 {
@@ -14,8 +15,6 @@ namespace AV00.Services
         private readonly TaskExecutorClient taskExecutorClient;
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 1;
-        private readonly ushort CommandBackoffMs = 10;
-        private readonly Dictionary<Guid, TaskEvent> TasksInProgress = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -37,45 +36,44 @@ namespace AV00.Services
 
         private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
-            Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3]}");
             Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3].ConvertToString()}");
-            TaskEvent taskEvent = new();
-            taskEvent.Deserialize(WireMessage);
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.ServiceName}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Type}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Id}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Command}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.Direction}");
-            Console.WriteLine($"DRIVER-SERVICE: [Received] TaskEvent {taskEvent.Data.PwmAmount}");
-
-            ExecutionControl(taskEvent);
-
-
+            try
+            {
+                MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
+                ExecutionControl(motorEvent);
+            } catch (Exception e)
+            {
+                Console.WriteLine($"@DRIVER-SERVICE: [Error] Failed to deserialize MotorEvent: {e.Message}");
+                return false;
+            }
             return true;
         }
 
-        private void CancelAllTasks()
+        // Likely a faster way to do this.
+        private void CancelAllCommands(QueueableMotor ActiveMotor, MotorEvent MotorEvent)
         {
-            foreach (var task in TasksInProgress)
+            foreach (var command in ActiveMotor.MotorCommandQueue)
             {
-                task.Value.Data.CancellationToken.IsCancellationRequested = true;
-                Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {task.Value.Id}");
-                taskExecutorClient.PublishReceipt(task.Value.GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
+                command.CancellationToken.IsCancellationRequested = true;
+                Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {command.CommandId}");
+                taskExecutorClient.PublishReceipt(MotorEvent.GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
             }
-            TasksInProgress.Clear();
+            ActiveMotor.MotorCommandQueue.Clear();
+            ActiveMotor.IsReserved = false;
+            ActiveMotor.ReservationId = Guid.Empty;
         }
 
-        private async Task CompleteTask(Guid TaskEventId)
+        private async Task CompleteTask(QueueableMotor ActiveMotor, MotorEvent MotorEvent)
         {
             await Task.Run(() =>
                 {
-                    TasksInProgress.TryGetValue(TaskEventId, out TaskEvent? taskEvent);
-                    if (taskEvent != null)
+                    if (ActiveMotor.ReservationId == MotorEvent.Id)
                     {
-                        Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {taskEvent.Id}");
-                        taskExecutorClient.PublishReceipt(taskEvent.GenerateReceipt(EnumTaskEventProcessingState.Completed));
-                        TasksInProgress.Remove(TaskEventId);
+                        ActiveMotor.IsReserved = false;
+                        ActiveMotor.ReservationId = Guid.Empty;
                     }
+                    Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {MotorEvent.Id}");
+                    taskExecutorClient.PublishReceipt(MotorEvent.GenerateReceipt(EnumTaskEventProcessingState.Completed));
                 }
             );
         }
@@ -86,47 +84,49 @@ namespace AV00.Services
         // If override, stop the current command and run the new command
 
         // TODO: This is a mess. Refactor this to be more readable and maintainable
-        private void ExecutionControl(TaskEvent CurrentTask)
+        private void ExecutionControl(MotorEvent MotorEvent)
         {
-            IMotor activeMotor = motorController.GetMotorByCommand(CurrentTask.Data.Command);
-            if (CurrentTask.Data.Mode == EnumExecutionMode.Override)
+            QueueableMotor activeMotor = motorController.GetMotorByCommand(MotorEvent.Data.Command);
+            if (MotorEvent.Data.Mode == EnumExecutionMode.Override)
             {
-                CancelAllTasks();
-                TasksInProgress.Add(CurrentTask.Id, CurrentTask);
+                CancelAllCommands(activeMotor, MotorEvent);
                 activeMotor.IsReserved = true;
-                var task = Execute(CurrentTask.Data);
-                activeMotor.IsReserved = false;
-                task.ContinueWith(t => CompleteTask(CurrentTask.Id));
+                activeMotor.ReservationId = MotorEvent.Id;
+                var task = ExecuteOverride(MotorEvent.Data);
+                task.ContinueWith(t => CompleteTask(activeMotor, MotorEvent));
             }
-            else if (activeMotor.IsReserved)
+            else if (MotorEvent.Data.Mode == EnumExecutionMode.Blocking)
             {
-                while (activeMotor.IsReserved)
-                {
-                    Thread.Sleep(CommandBackoffMs);
-                }
+                activeMotor.MotorCommandQueue.Enqueue(MotorEvent.Data);
+                var task = Execute(activeMotor);
+                task.ContinueWith(t => CompleteTask(activeMotor, MotorEvent));
             }
-
-            if (CurrentTask.Data.Mode == EnumExecutionMode.Blocking)
+            else if (MotorEvent.Data.Mode == EnumExecutionMode.NonBlocking)
             {
-                TasksInProgress.Add(CurrentTask.Id, CurrentTask);
-                activeMotor.IsReserved = true;
-                var task = Execute(CurrentTask.Data);
-                activeMotor.IsReserved = false;
-                task.ContinueWith(t => CompleteTask(CurrentTask.Id));
-            }
-            else if (CurrentTask.Data.Mode == EnumExecutionMode.NonBlocking)
-            {
-                TasksInProgress.Add(CurrentTask.Id, CurrentTask);
-                var task = Execute(CurrentTask.Data);
-                task.ContinueWith(t => CompleteTask(CurrentTask.Id));
+                Console.WriteLine("DriveService does not support execution of non-blocking commands... Skipping");
             }
         }
 
-        private async Task Execute(MotorCommandData MotorRequest)
+        private async Task ExecuteOverride(MotorCommandData MotorCommand)
         {
             await Task.Run(() =>
                 {
-                    motorController.Run(MotorRequest);
+                    motorController.Run(MotorCommand);
+                }
+            );
+        }
+
+        private async Task Execute(QueueableMotor ActiveMotor)
+        {
+            await Task.Run(() =>
+                {
+                    foreach (MotorCommandData motorCommand in ActiveMotor.MotorCommandQueue)
+                    {
+                        ActiveMotor.IsReserved = true;
+                        ActiveMotor.ReservationId = motorCommand.CommandId;
+                        motorController.Run(motorCommand);
+                        ActiveMotor.IsReserved = false;
+                    }
                 }
             );
         }

@@ -6,6 +6,23 @@ using AV00.Drivers.IO;
 
 namespace AV00.Controllers.MotorController
 {
+    public struct QueueableMotor
+    {
+        public readonly IMotor Motor { get => motor; }
+        private readonly IMotor motor;
+        public readonly Queue<MotorCommandData> MotorCommandQueue { get => motorCommandQueue; }
+        private readonly Queue<MotorCommandData> motorCommandQueue;
+        public bool IsReserved { get; set; } = false;
+        public Guid ReservationId { get; set; }
+        public bool IsActive { get; set; } = false;
+
+        public QueueableMotor(IMotor Motor)
+        {
+            motor = Motor;
+            motorCommandQueue = new Queue<MotorCommandData>();
+        }
+    }
+
     public class MotorDirection
     {
         private static readonly PinValue forwards = PinValue.High;
@@ -40,6 +57,8 @@ namespace AV00.Controllers.MotorController
     [Serializable]
     public readonly struct MotorCommandData
     {
+        public Guid CommandId { get => commandId; }
+        private readonly Guid commandId;
         public PinValue Direction { get => direction; }
         private readonly PinValue direction;
         public ushort PwmAmount { get => pwmAmount; }
@@ -52,36 +71,37 @@ namespace AV00.Controllers.MotorController
         private readonly CancellationToken cancellationToken;
 
         [JsonConstructor]
-        public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
+        public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, Guid CommandId, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
         {
             command = Command;
             direction = Direction;
             pwmAmount = PwmAmount;
             mode = Mode;
+            commandId = CommandId;
             cancellationToken = new CancellationToken();
         }
     }
 
     internal class PDSGBGearboxMotorController: IMotorController
     {
-        private readonly IMotor turningMotor;
-        private readonly IMotor driveMotor;
+        private readonly QueueableMotor turningMotor;
+        private readonly QueueableMotor driveMotor;
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
-        private readonly Dictionary<EnumMotorCommands, IMotor> MotorRegistry = new();
+        private readonly Dictionary<EnumMotorCommands, QueueableMotor> MotorRegistry = new();
 
         public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
             gpio = Gpio;
-            turningMotor = TurningMotor;
-            driveMotor = DriveMotor;
+            turningMotor = new QueueableMotor(TurningMotor);
+            driveMotor = new QueueableMotor(DriveMotor);
             servoBoardController = ServoBoardController;
             MotorRegistry.Add(EnumMotorCommands.Move, driveMotor);
             MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.
-        public IMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
+        public QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
         {
             return MotorRegistry[MotorCommand];
         }
@@ -94,10 +114,10 @@ namespace AV00.Controllers.MotorController
             }
             Console.WriteLine("New Test -----------------");
 
-            Console.WriteLine($"{turningMotor.Name} Current PWM: {turningMotor.CurrentPwmAmount}");
-            Console.WriteLine($"{driveMotor.Name} Current PWM: {driveMotor.CurrentPwmAmount}");
-            Console.WriteLine($"{turningMotor.Name} - Test Complete -----------------");
-            Console.WriteLine($"{driveMotor.Name} - Test Complete -----------------");
+            Console.WriteLine($"{turningMotor.Motor.Name} Current PWM: {turningMotor.Motor.CurrentPwmAmount}");
+            Console.WriteLine($"{driveMotor.Motor.Name} Current PWM: {driveMotor.Motor.CurrentPwmAmount}");
+            Console.WriteLine($"{turningMotor.Motor.Name} - Test Complete -----------------");
+            Console.WriteLine($"{driveMotor.Motor.Name} - Test Complete -----------------");
         }
 
         private static void WriteLogFile(IMotor RequestedMotor, MotorCommandData MotorRequest)
@@ -129,7 +149,7 @@ namespace AV00.Controllers.MotorController
 
         public void Run(MotorCommandData MotorRequest)
         {
-            IMotor RequestedMotor = MotorRegistry[MotorRequest.Command];
+            IMotor RequestedMotor = MotorRegistry[MotorRequest.Command].Motor;
             WriteLogFile(RequestedMotor, MotorRequest);
             if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
             {
@@ -150,11 +170,11 @@ namespace AV00.Controllers.MotorController
         private void SetDutyAndDirection(IMotor Motor)
         {
             Console.WriteLine($"---- {Motor.Name}: {Motor.PwmChannelId}: {Motor.CurrentPwmAmount}");
-            if (Motor.CurrentPwmAmount != 0) Motor.IsActive = true;
-            else Motor.IsActive = false;
+            //if (Motor.CurrentPwmAmount != 0) Motor.IsActive = true;
+            //else Motor.IsActive = false;
             gpio.SafeWritePin(Motor.DirectionPin, Motor.CurrentDirection);
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
-            if (Motor.CurrentPwmAmount == 0) Motor.IsActive = false;
+            //if (Motor.CurrentPwmAmount == 0) Motor.IsActive = false;
         }
 
         private void GradualStop(IMotor Motor, MotorCommandData MotorRequest)
@@ -207,8 +227,8 @@ namespace AV00.Controllers.MotorController
 
         private void HardStop(MotorCommandData MotorRequest)
         {
-            MotorRegistry[MotorRequest.Command].CurrentPwmAmount = 0;
-            SetDutyAndDirection(MotorRegistry[MotorRequest.Command]);
+            MotorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0;
+            SetDutyAndDirection(MotorRegistry[MotorRequest.Command].Motor);
         }
     }
 }
