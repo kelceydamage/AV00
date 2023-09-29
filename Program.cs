@@ -90,6 +90,13 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
             serviceBusClient.PushTask(myEvent);
 
+            Thread.Sleep(3000);
+
+            myData = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, Guid.NewGuid(), EnumExecutionMode.Override);
+            myEvent = new("DriveService", myData, EnumEventType.Event, myData.CommandId);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
+            serviceBusClient.PushTask(myEvent);
+
             var i = 0;
             while(!Console.KeyAvailable)
             {

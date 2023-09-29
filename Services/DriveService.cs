@@ -53,13 +53,14 @@ namespace AV00.Services
         // Likely a faster way to do this.
         private void CancelAllCommands(QueueableMotor ActiveMotor, MotorEvent MotorEvent)
         {
-            foreach (var command in ActiveMotor.MotorCommandQueue)
+            while (ActiveMotor.MotorCommandQueue.Count > 0)
             {
+                MotorCommandData command = ActiveMotor.MotorCommandQueue.Dequeue();
+                Console.WriteLine($"Cancelling: {command.CommandId}");
                 command.CancellationToken.IsCancellationRequested = true;
                 Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {command.CommandId}");
                 taskExecutorClient.PublishReceipt(MotorEvent.GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
             }
-            ActiveMotor.MotorCommandQueue.Clear();
             ActiveMotor.IsReserved = false;
             ActiveMotor.ReservationId = Guid.Empty;
         }
@@ -90,6 +91,7 @@ namespace AV00.Services
             QueueableMotor activeMotor = motorController.GetMotorByCommand(MotorEvent.Data.Command);
             if (MotorEvent.Data.Mode == EnumExecutionMode.Override)
             {
+                Console.WriteLine($"DRIVER-SERVICE: [Execute Override] for event: {MotorEvent.Id}");
                 CancelAllCommands(activeMotor, MotorEvent);
                 activeMotor.IsReserved = true;
                 activeMotor.ReservationId = MotorEvent.Id;
@@ -98,9 +100,10 @@ namespace AV00.Services
             }
             else if (MotorEvent.Data.Mode == EnumExecutionMode.Blocking)
             {
+                Console.WriteLine($"DRIVER-SERVICE: [Execute] for event: {MotorEvent.Id}");
                 activeMotor.MotorCommandQueue.Enqueue(MotorEvent.Data);
                 var task = Execute(activeMotor);
-                task.ContinueWith(t => CompleteTask(activeMotor, MotorEvent));
+                //task.ContinueWith(t => CompleteTask(activeMotor, MotorEvent));
             }
             else if (MotorEvent.Data.Mode == EnumExecutionMode.NonBlocking)
             {
@@ -123,6 +126,7 @@ namespace AV00.Services
                 {
                     while (ActiveMotor.MotorCommandQueue.Count > 0)
                     {
+                        Console.WriteLine($"QUEUE COUNT: {ActiveMotor.MotorCommandQueue.Count}");
                         MotorCommandData motorCommand = ActiveMotor.MotorCommandQueue.Dequeue();
                         ActiveMotor.IsReserved = true;
                         ActiveMotor.ReservationId = motorCommand.CommandId;
