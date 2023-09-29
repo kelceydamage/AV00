@@ -4,11 +4,12 @@ using System.Configuration;
 using AV00.Communication;
 using NetMQ;
 using AV00.Shared;
-using AV00.Drivers.Motors;
 using Transport.Messages;
 
 namespace AV00.Services
 {
+    using MotorEvent = Event<MotorCommandData>;
+
     internal class DriveService: IService
     {
         public string ServiceName { get => "DriveService"; }
@@ -39,7 +40,7 @@ namespace AV00.Services
             Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3].ConvertToString()}");
             try
             {
-                MotorEvent motorEvent = (MotorEvent)Event<MotorCommandData>.Deserialize(WireMessage);
+                MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 ExecutionControl(motorEvent);
             } catch (Exception e)
             {
@@ -120,8 +121,9 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
-                    foreach (MotorCommandData motorCommand in ActiveMotor.MotorCommandQueue)
+                    while (ActiveMotor.MotorCommandQueue.Count > 0)
                     {
+                        MotorCommandData motorCommand = ActiveMotor.MotorCommandQueue.Dequeue();
                         ActiveMotor.IsReserved = true;
                         ActiveMotor.ReservationId = motorCommand.CommandId;
                         motorController.Run(motorCommand);
