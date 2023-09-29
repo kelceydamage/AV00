@@ -80,6 +80,7 @@ namespace AV00.Controllers.MotorController
             MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
         }
 
+        // TODO: Stop is not implemented, might remove entirely as a command.
         public IMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
         {
             return MotorRegistry[MotorCommand];
