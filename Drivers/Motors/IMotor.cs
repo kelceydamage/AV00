@@ -4,6 +4,8 @@ namespace AV00.Drivers.Motors
 {
     public interface IMotor : IDevice
     {
+        public bool IsReserved { get; set; }
+        public bool IsActive { get; set; }
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public PinValue CurrentDirection { get; set; }

@@ -79,6 +79,10 @@ namespace AV00.Controllers.MotorController
             HardStop(driveMotor, Mode);
         }
 
+        // Execution control goals:
+        // If blocking, do not allow motor to be used until lock has expired
+        // If non-blocking, queue or blend the new command with the current command
+        // If override, stop the current command and run the new command
         private void RunMotor(IMotor Motor, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
         {
             using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
@@ -105,8 +109,11 @@ namespace AV00.Controllers.MotorController
         private void SetDutyAndDirection(IMotor Motor)
         {
             Console.WriteLine($"---- {Motor.Name}: {Motor.PwmChannelId}: {Motor.CurrentPwmAmount}");
+            if (Motor.CurrentPwmAmount != 0) Motor.IsActive = true;
+            else Motor.IsActive = false;
             gpio.SafeWritePin(Motor.DirectionPin, Motor.CurrentDirection);
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
+            if (Motor.CurrentPwmAmount == 0) Motor.IsActive = false;
         }
 
         private void GradualStop(IMotor Motor)
