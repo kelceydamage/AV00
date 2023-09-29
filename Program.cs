@@ -70,17 +70,22 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandData motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
+            MotorCommandData motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.NonBlocking);
             TaskEvent myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
+            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.NonBlocking);
             myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
-            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.NonBlocking);
+            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
+            myTask = new("DriveService", motorCommand);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
+            serviceBusClient.PushTask(myTask);
+
+            motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
             myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
