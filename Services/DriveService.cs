@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.Configuration;
 using AV00.Communication;
-using Transport.Messages;
 using NetMQ;
 
 namespace AV00.Services
@@ -47,14 +46,14 @@ namespace AV00.Services
 
             switch (taskEvent.Data.Command)
             {
-                case "move":
-                    motorController?.Move(taskEvent.Data.Direction,taskEvent.Data.PwmAmount, taskEvent.Data.Mode);
+                case EnumMotorCommands.Move:
+                    motorController?.Move(taskEvent.Data);
                     break;
-                case "turn":
-                    motorController?.Turn(taskEvent.Data.Direction, taskEvent.Data.PwmAmount, taskEvent.Data.Mode);
+                case EnumMotorCommands.Turn:
+                    motorController?.Turn(taskEvent.Data);
                     break;
-                case "stop":
-                    motorController?.Stop(taskEvent.Data.Mode);
+                case EnumMotorCommands.Stop:
+                    motorController?.Stop(taskEvent.Data);
                     break;
                 default:
                     break;

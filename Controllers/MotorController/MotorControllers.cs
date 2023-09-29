@@ -1,4 +1,5 @@
 ﻿using System.Device.Gpio;
+using System.Text.Json.Serialization;
 using AV00.Shared;
 using AV00.Drivers.Motors;
 using AV00.Drivers.IO;
@@ -18,12 +19,43 @@ namespace AV00.Controllers.MotorController
         public static PinValue Right { get => right; }
     }
 
+    public enum EnumMotorCommands
+    {
+        Move,
+        Turn,
+        Stop,
+        Null,
+    }
+
+    [Serializable]
+    public readonly struct MotorCommandData
+    {
+        public PinValue Direction { get => direction; }
+        private readonly PinValue direction;
+        public ushort PwmAmount { get => pwmAmount; }
+        private readonly ushort pwmAmount;
+        public EnumMotorCommands Command { get => command; }
+        private readonly EnumMotorCommands command;
+        public EnumExecutionMode Mode { get => mode; }
+        private readonly EnumExecutionMode mode;
+
+        [JsonConstructor]
+        public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
+        {
+            command = Command;
+            direction = Direction;
+            pwmAmount = PwmAmount;
+            mode = Mode;
+        }
+    }
+
     internal class PDSGBGearboxMotorController: IMotorController
     {
         private readonly IMotor turningMotor;
         private readonly IMotor driveMotor;
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
+        private readonly Dictionary<EnumMotorCommands, IMotor> MotorRegistry = new();
 
         public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
@@ -31,6 +63,8 @@ namespace AV00.Controllers.MotorController
             turningMotor = TurningMotor;
             driveMotor = DriveMotor;
             servoBoardController = ServoBoardController;
+            MotorRegistry.Add(EnumMotorCommands.Move, driveMotor);
+            MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
         }
 
         public void Test()
@@ -40,22 +74,6 @@ namespace AV00.Controllers.MotorController
                 outputFile.WriteLine("New Test -----------------");
             }
             Console.WriteLine("New Test -----------------");
-            Console.WriteLine("-- Move Forwads");
-            Move(MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
-            Thread.Sleep(1000);
-            Console.WriteLine("-- Move Backwards");
-            Move(MotorDirection.Backwards, 1024, EnumExecutionMode.Blocking);
-            Thread.Sleep(1000);
-            Move(MotorDirection.Backwards, 0, EnumExecutionMode.Blocking);
-            Console.WriteLine("-- Rotate Left");
-            Turn(MotorDirection.Left, 1024, EnumExecutionMode.Blocking);
-            Thread.Sleep(1000);
-            Console.WriteLine("-- Rotate Right");
-            Turn(MotorDirection.Right, 1024, EnumExecutionMode.Blocking);
-            Thread.Sleep(1000);
-            Turn(MotorDirection.Right, 0, EnumExecutionMode.Blocking);
-            Console.WriteLine("-- All Stop");
-            Stop(EnumExecutionMode.Blocking);
 
             Console.WriteLine($"{turningMotor.Name} Current PWM: {turningMotor.CurrentPwmAmount}");
             Console.WriteLine($"{driveMotor.Name} Current PWM: {driveMotor.CurrentPwmAmount}");
@@ -63,46 +81,55 @@ namespace AV00.Controllers.MotorController
             Console.WriteLine($"{driveMotor.Name} - Test Complete -----------------");
         }
 
-        public void Move(PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
+        private static void WriteLogFile(IMotor RequestedMotor, MotorCommandData MotorRequest)
         {
-            RunMotor(driveMotor, Direction, PwmAmount, Mode);
+            using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
+            {
+                outputFile.WriteLine($"-- Run Motor: {RequestedMotor.Name}-{RequestedMotor.PwmChannelId}, Direction: {MotorRequest.Direction}, Speed: {MotorRequest.PwmAmount}");
+            }
+            Console.WriteLine($"-- Run Motor: {RequestedMotor.Name}-{RequestedMotor.PwmChannelId}, Direction: {MotorRequest.Direction}, Speed: {MotorRequest.PwmAmount}");
         }
 
-        public void Turn(PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
+        // Compatability API
+        public void Move(MotorCommandData MotorRequest)
         {
-            RunMotor(turningMotor, Direction, PwmAmount, Mode);
+            RunMotor(MotorRequest);
         }
 
-        public void Stop(EnumExecutionMode Mode)
+        // Compatability API
+        public void Turn(MotorCommandData MotorRequest)
         {
-            HardStop(turningMotor, Mode);
-            HardStop(driveMotor, Mode);
+            RunMotor(MotorRequest);
+        }
+
+        // Compatability API
+        public void Stop(MotorCommandData MotorRequest)
+        {
+            HardStop(turningMotor, MotorRequest.Mode);
+            HardStop(driveMotor, MotorRequest.Mode);
         }
 
         // Execution control goals:
         // If blocking, do not allow motor to be used until lock has expired
         // If non-blocking, queue or blend the new command with the current command
         // If override, stop the current command and run the new command
-        private void RunMotor(IMotor Motor, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode)
+        private void RunMotor(MotorCommandData MotorRequest)
         {
-            using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
+            IMotor RequestedMotor = MotorRegistry[MotorRequest.Command];
+            WriteLogFile(RequestedMotor, MotorRequest);
+            if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
             {
-                outputFile.WriteLine($"-- Run Motor: {Motor.Name}-{Motor.PwmChannelId}, Direction: {Direction}, Speed: {PwmAmount}");
+                GradualStop(RequestedMotor);
             }
-            Console.WriteLine($"-- Run Motor: {Motor.Name}-{Motor.PwmChannelId}, Direction: {Direction}, Speed: {PwmAmount}");
-            if (Direction != Motor.CurrentDirection)
+            RequestedMotor.CurrentDirection = MotorRequest.Direction;
+            if (MotorRequest.PwmAmount == RequestedMotor.CurrentPwmAmount) { return; }
+            else if (MotorRequest.PwmAmount > RequestedMotor.CurrentPwmAmount)
             {
-                GradualStop(Motor);
+                Accelerate(RequestedMotor, MotorRequest.PwmAmount);
             }
-            Motor.CurrentDirection = Direction;
-            if (PwmAmount == Motor.CurrentPwmAmount) { return; }
-            else if (PwmAmount > Motor.CurrentPwmAmount)
+            else if (MotorRequest.PwmAmount < RequestedMotor.CurrentPwmAmount)
             {
-                Accelerate(Motor, PwmAmount);
-            }
-            else if (PwmAmount < Motor.CurrentPwmAmount)
-            {
-                Decelerate(Motor, PwmAmount);
+                Decelerate(RequestedMotor, MotorRequest.PwmAmount);
             }
         }
 

@@ -1,8 +1,7 @@
-﻿using AV00.Shared;
+﻿using AV00.Controllers.MotorController;
 using NetMQ;
 using System.Device.Gpio;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Transport.Messages;
 
 namespace AV00.Communication
@@ -13,28 +12,6 @@ namespace AV00.Communication
         public EnumEventType Type { get; }
         public NetMQMessage Serialize();
         public void Deserialize(NetMQMessage WireMessage);
-    }
-
-    [Serializable]
-    public readonly struct MotorCommandData
-    {
-        public PinValue Direction { get => direction; }
-        private readonly PinValue direction;
-        public ushort PwmAmount { get => pwmAmount; }
-        private readonly ushort pwmAmount;
-        public string Command { get => command; }
-        private readonly string command;
-        public EnumExecutionMode Mode { get => mode; }
-        private readonly EnumExecutionMode mode;
-
-        [JsonConstructor]
-        public MotorCommandData(string Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
-        {
-            command = Command;
-            direction = Direction;
-            pwmAmount = PwmAmount;
-            mode = Mode;
-        }
     }
 
     public class TaskEvent : BaseEvent, IEvent
@@ -66,7 +43,7 @@ namespace AV00.Communication
         {
             isNull = true;
             serviceName = "null";
-            data = new MotorCommandData("null", PinValue.Low, 0);
+            data = new MotorCommandData(EnumMotorCommands.Null, PinValue.Low, 0);
         }
 
         public override NetMQMessage Serialize()
