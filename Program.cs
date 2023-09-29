@@ -70,12 +70,17 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandData motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
+            MotorCommandData motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, EnumExecutionMode.Blocking);
             TaskEvent myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
 
             motorCommand = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.NonBlocking);
+            myTask = new("DriveService", motorCommand);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
+            serviceBusClient.PushTask(myTask);
+
+            motorCommand = new(EnumMotorCommands.Stop, MotorDirection.Forwards, 0, EnumExecutionMode.Blocking);
             myTask = new("DriveService", motorCommand);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myTask.Id}");
             serviceBusClient.PushTask(myTask);
