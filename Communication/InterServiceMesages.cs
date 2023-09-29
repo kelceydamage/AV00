@@ -15,10 +15,9 @@ namespace AV00.Communication
 
     public class MotorEvent : Event<MotorCommandData>, IEvent
     {
-        private readonly MotorCommandData data;
         public MotorEvent(string ServiceName, EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, EnumExecutionMode Mode = EnumExecutionMode.Blocking) : base(ServiceName)
         {
-            data = new MotorCommandData(Command, Direction, PwmAmount, Id, Mode);
+            data = new(Command, Direction, PwmAmount, Id, Mode);
         }
 
         public MotorEvent(NetMQMessage WireMessage) : base(WireMessage) { }

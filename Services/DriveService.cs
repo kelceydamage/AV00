@@ -39,7 +39,7 @@ namespace AV00.Services
             Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3].ConvertToString()}");
             try
             {
-                MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
+                MotorEvent motorEvent = (MotorEvent)Event<MotorCommandData>.Deserialize(WireMessage);
                 ExecutionControl(motorEvent);
             } catch (Exception e)
             {
