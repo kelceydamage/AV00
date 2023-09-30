@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using AV00.Shared;
 using AV00.Drivers.Motors;
 using AV00.Drivers.IO;
+using System.Runtime.InteropServices;
 
 namespace AV00.Controllers.MotorController
 {
@@ -101,9 +102,9 @@ namespace AV00.Controllers.MotorController
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.
-        public QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
+        public ref QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
         {
-            return MotorRegistry[MotorCommand];
+            return ref CollectionsMarshal.GetValueRefOrNullRef(MotorRegistry, MotorCommand);
         }
 
         public void Test()
