@@ -69,44 +69,43 @@ namespace AV00.Services
         {
             if (overrideBuffer.Count != 0)
             {
-                var task2 = Execute(overrideBuffer, motorController, true);
+                CancelAllCommands();
+                Console.WriteLine($"**** Run Overrides");
+                var task2 = Execute(overrideBuffer, true);
             }
             if (commandBuffer.Count != 0)
             {
-                var task1 = Execute(commandBuffer, motorController);
+                var task1 = Execute(commandBuffer);
             }
         }
 
         // TODO: Make to motors global objects so that the reservation system can be used with threads/tasks.
-        private async Task Execute(Queue<MotorEvent> Buffer, IMotorController SharedMotorController, bool IsOverride = false)
+        //private async Task Execute(Queue<MotorEvent> Buffer, IMotorController SharedMotorController, bool IsOverride = false)
+        private async Task Execute(Queue<MotorEvent> Buffer, bool IsOverride = false)
         {
             await Task.Run(() =>
                 {
-                    Console.WriteLine($"#####----- New Batch");
-                    if (IsOverride)
-                    {
-                        Console.WriteLine($"**** Run Override");
-                        CancelAllCommands();
-                    }
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
-                        QueueableMotor activeMotor = SharedMotorController.GetMotorByCommand(command.Data.Command);
+                        QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
                         Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride)
                         {
-                            Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}");
+                            Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
                             Thread.Sleep(backoffFrequencyMs);
                         }
-                        activeTasks.Add(command.Id, command);
-                        activeMotor.IsReserved = true;
-                        activeMotor.ReservationId = command.Id;
-                        Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
-                        motorController.Run(command.Data);
-                        Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
-                        activeMotor.ReservationId = Guid.Empty;
-                        activeMotor.IsReserved = false;
-                        activeTasks.Remove(command.Id);
+                        lock (activeMotor)
+                        {
+                            activeMotor.IsReserved = true;
+                            activeMotor.ReservationId = command.Id;
+                            Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
+                            motorController.Run(command.Data);
+                            Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
+                            activeTasks.Remove(command.Id);
+                            activeMotor.ReservationId = Guid.Empty;
+                            activeMotor.IsReserved = false;
+                        }
                         var ExecutionState = EnumTaskEventProcessingState.Completed;
                         if (command.Data.CancellationToken.IsCancellationRequested)
                             ExecutionState = EnumTaskEventProcessingState.Cancelled;
@@ -120,9 +119,7 @@ namespace AV00.Services
         {
             foreach (var command in activeTasks)
             {
-                activeTasks.Remove(command.Key);
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
-                //IssueCommandReceipt(command.Value, EnumTaskEventProcessingState.Cancelled);
             }
         }
 
