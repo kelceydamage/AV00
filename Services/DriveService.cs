@@ -95,17 +95,17 @@ namespace AV00.Services
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
                             Thread.Sleep(backoffFrequencyMs);
                         }
-                        //lock (activeMotor)
-                        //{
-                        activeMotor.IsReserved = true;
-                        activeMotor.ReservationId = command.Id;
-                        Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
-                        motorController.Run(command.Data);
-                        Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
-                        activeTasks.Remove(command.Id);
-                        activeMotor.ReservationId = Guid.Empty;
-                        activeMotor.IsReserved = false;
-                        //}
+                        lock (activeMotor)
+                        {
+                            activeMotor.IsReserved = true;
+                            activeMotor.ReservationId = command.Id;
+                            Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
+                            motorController.Run(command.Data);
+                            Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
+                            activeTasks.Remove(command.Id);
+                            activeMotor.ReservationId = Guid.Empty;
+                            activeMotor.IsReserved = false;
+                        }
                         var ExecutionState = EnumTaskEventProcessingState.Completed;
                         if (command.Data.CancellationToken.IsCancellationRequested)
                             ExecutionState = EnumTaskEventProcessingState.Cancelled;
