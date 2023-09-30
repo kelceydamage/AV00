@@ -5,8 +5,6 @@ using AV00.Communication;
 using NetMQ;
 using AV00.Shared;
 using Transport.Messages;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
 
 namespace AV00.Services
 {
@@ -71,7 +69,10 @@ namespace AV00.Services
             {
                 var task2 = Execute(overrideBuffer, true);
             }
-            var task1 = Execute(commandBuffer);
+            if (commandBuffer.Count != 0)
+            {
+                var task1 = Execute(commandBuffer);
+            }
         }
 
         private async Task Execute(List<MotorEvent> CommandBuffer, bool IsOverride = false)
@@ -80,11 +81,13 @@ namespace AV00.Services
                 {
                     if (IsOverride)
                     {
+                        Console.WriteLine($"**** Run Override");
                         CancelAllCommands();
                     }
                     foreach (var command in CommandBuffer)
                     {
                         QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
+                        Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId}");
                         while (activeMotor.IsReserved && !IsOverride)
                         {
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}");
@@ -115,7 +118,7 @@ namespace AV00.Services
 
         private void IssueCommandReceipt(MotorEvent CurrentEvent, EnumTaskEventProcessingState ExecutionState)
         {
-            Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {CurrentEvent.Id}");
+            Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {CurrentEvent.Id} ES-{ExecutionState}");
             taskExecutorClient.PublishReceipt(CurrentEvent.GenerateReceipt(ExecutionState));
         }
     }
