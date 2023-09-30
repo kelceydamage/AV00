@@ -88,6 +88,7 @@ namespace AV00.Services
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
+                        activeTasks.Add(command.Id, command);
                         QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
                         Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride)
