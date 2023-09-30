@@ -80,11 +80,11 @@ namespace AV00.Services
         }
 
         // TODO: Make to motors global objects so that the reservation system can be used with threads/tasks.
-        //private async Task Execute(Queue<MotorEvent> Buffer, IMotorController SharedMotorController, bool IsOverride = false)
         private async Task Execute(Queue<MotorEvent> Buffer, bool IsOverride = false)
         {
             await Task.Run(() =>
                 {
+                    if (IsOverride) CancelAllCommands();
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
@@ -120,8 +120,8 @@ namespace AV00.Services
             Console.WriteLine($"CANCEL Active Tasks: {activeTasks.Count}");
             foreach (var command in activeTasks)
             {
-                Console.WriteLine($"CANCEL: {command.Value.Id}");
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
+                Console.WriteLine($"CANCEL: {command.Value.Id} - {command.Value.Data.CancellationToken.IsCancellationRequested}");
             }
         }
 
