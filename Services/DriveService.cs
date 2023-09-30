@@ -20,6 +20,7 @@ namespace AV00.Services
         private readonly Dictionary<Guid, MotorEvent> activeTasks = new();
         private readonly Queue<MotorEvent> commandBuffer = new();
         private readonly Queue<MotorEvent> overrideBuffer = new();
+        private readonly bool enableDebugLogging = false;
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -27,6 +28,7 @@ namespace AV00.Services
             motorController = MotorController;
             updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception());
             taskExecutorClient.RegisterServiceEventCallback(ServiceName, OnTaskEventCallback);
+            enableDebugLogging = bool.Parse(Settings["RelayEnableDebugLogging"] ?? throw new Exception());
         }
 
         public void Start()
