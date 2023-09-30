@@ -62,16 +62,19 @@ namespace AV00.Services
                 Console.WriteLine($"Cancelling: {command.CommandId}");
                 command.CancellationToken.IsCancellationRequested = true;
                 Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {command.CommandId}");
-                taskExecutorClient.PublishReceipt(MotorEvent.GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
+                // Figure out how to send cancel receipt
+                //taskExecutorClient.PublishReceipt(command..GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
             }
             // HACK
             foreach (var motorEvent in activeTasks)
             {
-                Console.WriteLine($"Cancelling: {motorEvent.Key}");
-                motorEvent.Value.Data.CancellationToken.IsCancellationRequested = true;
-                activeTasks.Remove(motorEvent.Key);
+                if (motorEvent.Value.Id != MotorEvent.Id)
+                {
+                    Console.WriteLine($"Cancelling: {motorEvent.Key}");
+                    motorEvent.Value.Data.CancellationToken.IsCancellationRequested = true;
+                    activeTasks.Remove(motorEvent.Key);
+                }
             }
-
             ActiveMotor.IsReserved = false;
             ActiveMotor.ReservationId = Guid.Empty;
         }
