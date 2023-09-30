@@ -18,8 +18,8 @@ namespace AV00.Services
         private readonly int updateFrequency = 1;
         private readonly int backoffFrequencyMs = 100;
         private readonly Dictionary<Guid, MotorEvent> activeTasks = new();
-        private readonly List<MotorEvent> commandBuffer = new();
-        private readonly List<MotorEvent> overrideBuffer = new();
+        private readonly Queue<MotorEvent> commandBuffer = new();
+        private readonly Queue<MotorEvent> overrideBuffer = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -48,12 +48,12 @@ namespace AV00.Services
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
-                    overrideBuffer.Add(motorEvent);
+                    overrideBuffer.Enqueue(motorEvent);
                     commandBuffer.Clear();
                 }
                 else
                 {
-                    commandBuffer.Add(motorEvent);
+                    commandBuffer.Enqueue(motorEvent);
                 }
             } catch (Exception e)
             {
@@ -75,7 +75,7 @@ namespace AV00.Services
             }
         }
 
-        private async Task Execute(List<MotorEvent> CommandBuffer, bool IsOverride = false)
+        private async Task Execute(Queue<MotorEvent> Buffer, bool IsOverride = false)
         {
             await Task.Run(() =>
                 {
@@ -84,8 +84,9 @@ namespace AV00.Services
                         Console.WriteLine($"**** Run Override");
                         CancelAllCommands();
                     }
-                    foreach (var command in CommandBuffer)
+                    foreach (var _ in Buffer)
                     {
+                        MotorEvent command = Buffer.Dequeue();
                         QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
                         Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride)
@@ -98,9 +99,9 @@ namespace AV00.Services
                         activeMotor.ReservationId = command.Id;
                         Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         motorController.Run(command.Data);
+                        Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         activeMotor.ReservationId = Guid.Empty;
                         activeMotor.IsReserved = false;
-                        Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         activeTasks.Remove(command.Id);
                         var ExecutionState = EnumTaskEventProcessingState.Completed;
                         if (command.Data.CancellationToken.IsCancellationRequested)
