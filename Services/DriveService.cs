@@ -87,7 +87,7 @@ namespace AV00.Services
                     foreach (var command in CommandBuffer)
                     {
                         QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
-                        Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId}");
+                        Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride)
                         {
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}");
@@ -96,11 +96,16 @@ namespace AV00.Services
                         activeTasks.Add(command.Id, command);
                         activeMotor.IsReserved = true;
                         activeMotor.ReservationId = command.Id;
+                        Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         motorController.Run(command.Data);
                         activeMotor.ReservationId = Guid.Empty;
                         activeMotor.IsReserved = false;
+                        Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         activeTasks.Remove(command.Id);
-                        IssueCommandReceipt(command, EnumTaskEventProcessingState.Completed);
+                        var ExecutionState = EnumTaskEventProcessingState.Completed;
+                        if (command.Data.CancellationToken.IsCancellationRequested)
+                            ExecutionState = EnumTaskEventProcessingState.Cancelled;
+                        IssueCommandReceipt(command, ExecutionState);
                     }
                 }
             );
@@ -112,7 +117,7 @@ namespace AV00.Services
             {
                 activeTasks.Remove(command.Key);
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
-                IssueCommandReceipt(command.Value, EnumTaskEventProcessingState.Cancelled);
+                //IssueCommandReceipt(command.Value, EnumTaskEventProcessingState.Cancelled);
             }
         }
 
