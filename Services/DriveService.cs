@@ -77,6 +77,7 @@ namespace AV00.Services
             }
         }
 
+        // TODO: Make to motors global objects so that the reservation system can be used with threads/tasks.
         private async Task Execute(Queue<MotorEvent> Buffer, bool IsOverride = false)
         {
             await Task.Run(() =>
