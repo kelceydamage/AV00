@@ -20,7 +20,7 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 * [ ] Create a basic feedback loop that keeps the robot driving straight.
 * [ ] Remote input/override service.
 * [ ] Create a basic console status screen while running program from terminal.
-* [x] Implement a strategy for handling blocking, non-blocking, and override motor operations.
+* [x] Implement a strategy for handling blocking, non-blocking, and override motor operations. ![Motor Command Execution Flow (3)](https://github.com/kelceydamage/AV00/assets/16090219/5c59d172-462f-49ca-ab8d-6c5c2ca6b29d)
 
 ## TODO - Desktop Software (Next Phase)
 * [ ] Create a desktop application to view telemery over WIFI.
