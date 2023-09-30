@@ -82,6 +82,7 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
+                    Console.WriteLine($"#####----- New Batch");
                     if (IsOverride)
                     {
                         Console.WriteLine($"**** Run Override");

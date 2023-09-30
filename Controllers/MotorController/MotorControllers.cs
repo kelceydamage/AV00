@@ -6,11 +6,11 @@ using AV00.Drivers.IO;
 
 namespace AV00.Controllers.MotorController
 {
-    public struct QueueableMotor
+    public class QueueableMotor
     {
-        public readonly IMotor Motor { get => motor; }
+        public IMotor Motor { get => motor; }
         private readonly IMotor motor;
-        public readonly Queue<MotorCommandData> MotorCommandQueue { get => motorCommandQueue; }
+        public Queue<MotorCommandData> MotorCommandQueue { get => motorCommandQueue; }
         private readonly Queue<MotorCommandData> motorCommandQueue;
         public bool IsReserved { get; set; } = false;
         public Guid ReservationId { get; set; }
