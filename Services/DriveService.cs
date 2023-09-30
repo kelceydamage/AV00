@@ -141,6 +141,7 @@ namespace AV00.Services
                 {
                     while (ActiveMotor.MotorCommandQueue.Count > 0)
                     {
+                        // Reservation is per thread so we need global lock.
                         if (!ActiveMotor.IsReserved)
                         {
                             MotorCommandData motorCommand = ActiveMotor.MotorCommandQueue.Dequeue();
