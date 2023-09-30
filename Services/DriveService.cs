@@ -117,8 +117,10 @@ namespace AV00.Services
 
         private void CancelAllCommands()
         {
+            Console.WriteLine($"CANCEL Active Tasks: {activeTasks.Count}");
             foreach (var command in activeTasks)
             {
+                Console.WriteLine($"CANCEL: {command.Value.Id}");
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
             }
         }
