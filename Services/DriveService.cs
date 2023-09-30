@@ -69,16 +69,16 @@ namespace AV00.Services
         {
             if (overrideBuffer.Count != 0)
             {
-                var task2 = Execute(overrideBuffer, true);
+                var task2 = Execute(overrideBuffer, motorController, true);
             }
             if (commandBuffer.Count != 0)
             {
-                var task1 = Execute(commandBuffer);
+                var task1 = Execute(commandBuffer, motorController);
             }
         }
 
         // TODO: Make to motors global objects so that the reservation system can be used with threads/tasks.
-        private async Task Execute(Queue<MotorEvent> Buffer, bool IsOverride = false)
+        private async Task Execute(Queue<MotorEvent> Buffer, IMotorController SharedMotorController, bool IsOverride = false)
         {
             await Task.Run(() =>
                 {
@@ -90,7 +90,7 @@ namespace AV00.Services
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
-                        QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
+                        QueueableMotor activeMotor = SharedMotorController.GetMotorByCommand(command.Data.Command);
                         Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride)
                         {
