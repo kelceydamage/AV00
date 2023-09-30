@@ -18,6 +18,7 @@ namespace AV00.Services
         private readonly TaskExecutorClient taskExecutorClient;
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 1;
+        private readonly int backoffFrequencyMs = 100;
         private readonly Dictionary<Guid, MotorEvent> activeTasks = new();
         private readonly List<MotorEvent> commandBuffer = new();
         private readonly List<MotorEvent> overrideBuffer = new();
@@ -83,8 +84,18 @@ namespace AV00.Services
                     }
                     foreach (var command in CommandBuffer)
                     {
+                        QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
+                        while (activeMotor.IsReserved && !IsOverride)
+                        {
+                            Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}");
+                            Thread.Sleep(backoffFrequencyMs);
+                        }
                         activeTasks.Add(command.Id, command);
+                        activeMotor.IsReserved = true;
+                        activeMotor.ReservationId = command.Id;
                         motorController.Run(command.Data);
+                        activeMotor.ReservationId = Guid.Empty;
+                        activeMotor.IsReserved = false;
                         activeTasks.Remove(command.Id);
                         IssueCommandReceipt(command, EnumTaskEventProcessingState.Completed);
                     }
