@@ -5,7 +5,7 @@ namespace AV00.Controllers.MotorController
 {
     public interface IMotorController
     {
-        public QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand);
+        public LockableMotor GetMotorByCommand(EnumMotorCommands MotorCommand);
         public void Test();
         // Compatability API
         public void Move(MotorCommandData MotorRequest);

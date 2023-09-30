@@ -6,20 +6,17 @@ using AV00.Drivers.IO;
 
 namespace AV00.Controllers.MotorController
 {
-    public class QueueableMotor
+    public class LockableMotor
     {
         public IMotor Motor { get => motor; }
         private readonly IMotor motor;
-        public Queue<MotorCommandData> MotorCommandQueue { get => motorCommandQueue; }
-        private readonly Queue<MotorCommandData> motorCommandQueue;
         public bool IsReserved { get; set; } = false;
         public Guid ReservationId { get; set; }
         public bool IsActive { get; set; } = false;
 
-        public QueueableMotor(IMotor Motor)
+        public LockableMotor(IMotor Motor)
         {
             motor = Motor;
-            motorCommandQueue = new Queue<MotorCommandData>();
         }
     }
 
@@ -84,24 +81,24 @@ namespace AV00.Controllers.MotorController
 
     internal class PDSGBGearboxMotorController: IMotorController
     {
-        private readonly QueueableMotor turningMotor;
-        private readonly QueueableMotor driveMotor;
+        private readonly LockableMotor turningMotor;
+        private readonly LockableMotor driveMotor;
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
-        private readonly Dictionary<EnumMotorCommands, QueueableMotor> MotorRegistry = new();
+        private readonly Dictionary<EnumMotorCommands, LockableMotor> MotorRegistry = new();
 
         public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
             gpio = Gpio;
-            turningMotor = new QueueableMotor(TurningMotor);
-            driveMotor = new QueueableMotor(DriveMotor);
+            turningMotor = new LockableMotor(TurningMotor);
+            driveMotor = new LockableMotor(DriveMotor);
             servoBoardController = ServoBoardController;
             MotorRegistry.Add(EnumMotorCommands.Move, driveMotor);
             MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.
-        public QueueableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
+        public LockableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
         {
             return MotorRegistry[MotorCommand];
         }
@@ -124,9 +121,9 @@ namespace AV00.Controllers.MotorController
         {
             using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
             {
-                outputFile.WriteLine($"-- Run Motor: {RequestedMotor.Name}-{RequestedMotor.PwmChannelId}, Direction: {MotorRequest.Direction}, Speed: {MotorRequest.PwmAmount}");
+                outputFile.WriteLine($"*DEBUG* MOTOR-CONTROLLER [RunMotor]: {RequestedMotor.Name} Channel {RequestedMotor.PwmChannelId} Direction {MotorRequest.Direction} Speed: {MotorRequest.PwmAmount}");
             }
-            Console.WriteLine($"-- Run Motor: {RequestedMotor.Name}-{RequestedMotor.PwmChannelId}, Direction: {MotorRequest.Direction}, Speed: {MotorRequest.PwmAmount}");
+            Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [RunMotor]: {RequestedMotor.Name} Channel {RequestedMotor.PwmChannelId} Direction {MotorRequest.Direction} Speed: {MotorRequest.PwmAmount}");
         }
 
         // Compatability API
@@ -169,12 +166,8 @@ namespace AV00.Controllers.MotorController
 
         private void SetDutyAndDirection(IMotor Motor)
         {
-            Console.WriteLine($"---- {Motor.Name}: {Motor.PwmChannelId}: {Motor.CurrentPwmAmount}");
-            //if (Motor.CurrentPwmAmount != 0) Motor.IsActive = true;
-            //else Motor.IsActive = false;
             gpio.SafeWritePin(Motor.DirectionPin, Motor.CurrentDirection);
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
-            //if (Motor.CurrentPwmAmount == 0) Motor.IsActive = false;
         }
 
         private void GradualStop(IMotor Motor, MotorCommandData MotorRequest)
@@ -191,7 +184,7 @@ namespace AV00.Controllers.MotorController
             ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
             if (targetPwm < stopAmount) { targetPwm = stopAmount; }
             ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
-            Console.WriteLine($"-- Decelerate: from={Motor.CurrentPwmAmount}, to={targetPwm}, steps={pwmChangeAmount}");
+            Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Decelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount > targetPwm)
             {
                 if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }
@@ -214,7 +207,7 @@ namespace AV00.Controllers.MotorController
             ushort runAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.RunPwm * servoBoardController.PwmMaxValue);
             if (targetPwm > runAmount) { targetPwm = runAmount; }
             ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
-            Console.WriteLine($"-- Accelerate: from={Motor.CurrentPwmAmount}, to={targetPwm}, steps={pwmChangeAmount}");
+            Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Accelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount < targetPwm)
             {
                 if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }

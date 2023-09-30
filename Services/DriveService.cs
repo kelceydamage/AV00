@@ -44,7 +44,7 @@ namespace AV00.Services
 
         private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
-            Console.WriteLine($"@DRIVER-SERVICE: [Received] TaskEvent {WireMessage[3].ConvertToString()}");
+            Console.WriteLine($"DRIVER-SERVICE: [Received] MotorEvent {WireMessage[3].ConvertToString()}");
             try
             {
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
@@ -59,7 +59,7 @@ namespace AV00.Services
                 }
             } catch (Exception e)
             {
-                Console.WriteLine($"@DRIVER-SERVICE: [Error] Failed to deserialize MotorEvent: {e.Message}");
+                Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to deserialize MotorEvent {e.Message}");
                 return false;
             }
             return true;
@@ -70,20 +70,21 @@ namespace AV00.Services
             if (overrideBuffer.Count != 0)
             {
                 CancelAllCommands();
-                foreach (var command in overrideBuffer)
-                {
-                    activeTasks.Add(command.Id, command);
-                }
-                Console.WriteLine($"**** Run Overrides");
+                RegisterActiveCommands(overrideBuffer);
                 var task2 = Execute(overrideBuffer, true);
             }
             if (commandBuffer.Count != 0)
             {
-                foreach (var command in commandBuffer)
-                {
-                    activeTasks.Add(command.Id, command);
-                }
+                RegisterActiveCommands(commandBuffer);
                 var task1 = Execute(commandBuffer);
+            }
+        }
+
+        private void RegisterActiveCommands(Queue<MotorEvent> PendingCommandBuffer)
+        {
+            foreach (var command in PendingCommandBuffer)
+            {
+                activeTasks.Add(command.Id, command);
             }
         }
 
@@ -95,8 +96,8 @@ namespace AV00.Services
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
-                        QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
-                        Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
+                        LockableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
+                        Console.WriteLine($"DRIVER-SERVICE: [MotorLock] {activeMotor.Motor.Name} MotorEvent {activeMotor.ReservationId} is active {activeMotor.IsReserved}");
                         while (activeMotor.IsReserved && !IsOverride && !command.Data.CancellationToken.IsCancellationRequested)
                         {
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
@@ -108,9 +109,7 @@ namespace AV00.Services
                             {
                                 activeMotor.IsReserved = true;
                                 activeMotor.ReservationId = command.Id;
-                                Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
                                 motorController.Run(command.Data);
-                                Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
                                 activeMotor.ReservationId = Guid.Empty;
                                 activeMotor.IsReserved = false;
                             }
@@ -127,17 +126,16 @@ namespace AV00.Services
 
         private void CancelAllCommands()
         {
-            Console.WriteLine($"CANCEL Active Tasks: {activeTasks.Count}");
             foreach (var command in activeTasks)
             {
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
-                Console.WriteLine($"CANCEL: {command.Value.Id} - {command.Value.Data.CancellationToken.IsCancellationRequested}");
+                Console.WriteLine($"DRIVER-SERVICE: [Cancel] MotorEvent {command.Value.Id}");
             }
         }
 
         private void IssueCommandReceipt(MotorEvent CurrentEvent, EnumTaskEventProcessingState ExecutionState)
         {
-            Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {CurrentEvent.Id} ES-{ExecutionState}");
+            Console.WriteLine($"DRIVER-SERVICE: [Issuing] EventReceipt <{ExecutionState}> for MotorEvent {CurrentEvent.Id}");
             taskExecutorClient.PublishReceipt(CurrentEvent.GenerateReceipt(ExecutionState));
         }
     }
