@@ -69,7 +69,7 @@ namespace AV00.Services
         {
             if (overrideBuffer.Count != 0)
             {
-                CancelAllCommands();
+                //CancelAllCommands();
                 Console.WriteLine($"**** Run Overrides");
                 var task2 = Execute(overrideBuffer, true);
             }
@@ -95,8 +95,14 @@ namespace AV00.Services
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
                             Thread.Sleep(backoffFrequencyMs);
                         }
-                        lock (activeMotor)
+                        if (command.Data.CancellationToken.IsCancellationRequested)
                         {
+                            activeTasks.Remove(command.Id);
+                        }
+                        else
+                        {
+                            //lock (activeMotor)
+                            //{
                             activeMotor.IsReserved = true;
                             activeMotor.ReservationId = command.Id;
                             Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
@@ -120,6 +126,7 @@ namespace AV00.Services
             Console.WriteLine($"CANCEL Active Tasks: {activeTasks.Count}");
             foreach (var command in activeTasks)
             {
+                activeTasks.Remove(command.Key);
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
                 Console.WriteLine($"CANCEL: {command.Value.Id} - {command.Value.Data.CancellationToken.IsCancellationRequested}");
             }
