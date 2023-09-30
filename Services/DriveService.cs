@@ -97,12 +97,15 @@ namespace AV00.Services
                     {
                         MotorEvent command = Buffer.Dequeue();
                         LockableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
-                        Console.WriteLine($"DRIVER-SERVICE: [MotorLock] {activeMotor.Motor.Name} MotorEvent {activeMotor.ReservationId} is active {activeMotor.IsReserved}");
-                        while (activeMotor.IsReserved && !IsOverride && !command.Data.CancellationToken.IsCancellationRequested)
+                        if (activeMotor.IsReserved && !IsOverride)
                         {
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
+                        }
+                        while (activeMotor.IsReserved && !IsOverride && !command.Data.CancellationToken.IsCancellationRequested)
+                        {
                             Thread.Sleep(backoffFrequencyMs);
                         }
+                        Console.WriteLine($"DRIVER-SERVICE: [MotorLock] {activeMotor.Motor.Name} MotorEvent {activeMotor.ReservationId} is active {activeMotor.IsReserved}");
                         if (!command.Data.CancellationToken.IsCancellationRequested)
                         {
                             lock (activeMotor)
