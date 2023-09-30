@@ -69,12 +69,20 @@ namespace AV00.Services
         {
             if (overrideBuffer.Count != 0)
             {
-                //CancelAllCommands();
+                CancelAllCommands();
+                foreach (var command in overrideBuffer)
+                {
+                    activeTasks.Add(command.Id, command);
+                }
                 Console.WriteLine($"**** Run Overrides");
                 var task2 = Execute(overrideBuffer, true);
             }
             if (commandBuffer.Count != 0)
             {
+                foreach (var command in commandBuffer)
+                {
+                    activeTasks.Add(command.Id, command);
+                }
                 var task1 = Execute(commandBuffer);
             }
         }
@@ -84,23 +92,17 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
-                    if (IsOverride) CancelAllCommands();
                     foreach (var _ in Buffer)
                     {
                         MotorEvent command = Buffer.Dequeue();
-                        activeTasks.Add(command.Id, command);
                         QueueableMotor activeMotor = motorController.GetMotorByCommand(command.Data.Command);
                         Console.WriteLine($"**** MotorLock {activeMotor.Motor.Name} - {activeMotor.ReservationId} - {activeMotor.IsReserved}");
-                        while (activeMotor.IsReserved && !IsOverride)
+                        while (activeMotor.IsReserved && !IsOverride && !command.Data.CancellationToken.IsCancellationRequested)
                         {
                             Console.WriteLine($"DRIVER-SERVICE: [Warning] Motor {activeMotor.Motor.Name} is reserved by {activeMotor.ReservationId}, requestee {command.Id}");
                             Thread.Sleep(backoffFrequencyMs);
                         }
-                        if (command.Data.CancellationToken.IsCancellationRequested)
-                        {
-                            activeTasks.Remove(command.Id);
-                        }
-                        else
+                        if (!command.Data.CancellationToken.IsCancellationRequested)
                         {
                             lock (activeMotor)
                             {
@@ -109,11 +111,11 @@ namespace AV00.Services
                                 Console.WriteLine($" ------- Set lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
                                 motorController.Run(command.Data);
                                 Console.WriteLine($" ------- Unset lock {activeMotor.ReservationId} - {activeMotor.IsReserved}, requestee {command.Id}");
-                                activeTasks.Remove(command.Id);
                                 activeMotor.ReservationId = Guid.Empty;
                                 activeMotor.IsReserved = false;
                             }
                         }
+                        activeTasks.Remove(command.Id);
                         var ExecutionState = EnumTaskEventProcessingState.Completed;
                         if (command.Data.CancellationToken.IsCancellationRequested)
                             ExecutionState = EnumTaskEventProcessingState.Cancelled;
@@ -128,7 +130,6 @@ namespace AV00.Services
             Console.WriteLine($"CANCEL Active Tasks: {activeTasks.Count}");
             foreach (var command in activeTasks)
             {
-                activeTasks.Remove(command.Key);
                 command.Value.Data.CancellationToken.IsCancellationRequested = true;
                 Console.WriteLine($"CANCEL: {command.Value.Id} - {command.Value.Data.CancellationToken.IsCancellationRequested}");
             }
