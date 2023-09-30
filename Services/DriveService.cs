@@ -5,6 +5,8 @@ using AV00.Communication;
 using NetMQ;
 using AV00.Shared;
 using Transport.Messages;
+using System.Collections.Generic;
+using MassTransit.RabbitMqTransport;
 
 namespace AV00.Services
 {
@@ -16,6 +18,7 @@ namespace AV00.Services
         private readonly TaskExecutorClient taskExecutorClient;
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 1;
+        private Dictionary<Guid, MotorEvent> activeTasks = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -61,6 +64,14 @@ namespace AV00.Services
                 Console.WriteLine($"DRIVER-SERVICE: [Issuing] TaskEventReceipt for event: {command.CommandId}");
                 taskExecutorClient.PublishReceipt(MotorEvent.GenerateReceipt(EnumTaskEventProcessingState.Cancelled));
             }
+            // HACK
+            foreach (var motorEvent in activeTasks)
+            {
+                Console.WriteLine($"Cancelling: {motorEvent.Key}");
+                motorEvent.Value.Data.CancellationToken.IsCancellationRequested = true;
+                activeTasks.Remove(motorEvent.Key);
+            }
+
             ActiveMotor.IsReserved = false;
             ActiveMotor.ReservationId = Guid.Empty;
         }
@@ -89,6 +100,7 @@ namespace AV00.Services
         private void ExecutionControl(MotorEvent MotorEvent)
         {
             QueueableMotor activeMotor = motorController.GetMotorByCommand(MotorEvent.Data.Command);
+            activeTasks.Add(MotorEvent.Id, MotorEvent);
             if (MotorEvent.Data.Mode == EnumExecutionMode.Override)
             {
                 Console.WriteLine($"DRIVER-SERVICE: [Execute Override] for event: {MotorEvent.Id}");
@@ -126,12 +138,21 @@ namespace AV00.Services
                 {
                     while (ActiveMotor.MotorCommandQueue.Count > 0)
                     {
+                        if (!ActiveMotor.IsReserved)
+                        {
+                            MotorCommandData motorCommand = ActiveMotor.MotorCommandQueue.Dequeue();
+                            ActiveMotor.IsReserved = true;
+                            ActiveMotor.ReservationId = motorCommand.CommandId;
+                            motorController.Run(motorCommand);
+                            ActiveMotor.IsReserved = false;
+                            ActiveMotor.ReservationId = Guid.Empty;
+                            activeTasks.Remove(motorCommand.CommandId);
+                        }
+                        else
+                        {
+                            Thread.Sleep(100);
+                        }
                         Console.WriteLine($"QUEUE COUNT: {ActiveMotor.MotorCommandQueue.Count}");
-                        MotorCommandData motorCommand = ActiveMotor.MotorCommandQueue.Dequeue();
-                        ActiveMotor.IsReserved = true;
-                        ActiveMotor.ReservationId = motorCommand.CommandId;
-                        motorController.Run(motorCommand);
-                        ActiveMotor.IsReserved = false;
                     }
                 }
             );
