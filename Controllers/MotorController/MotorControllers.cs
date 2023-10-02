@@ -37,8 +37,6 @@ namespace AV00.Controllers.MotorController
     {
         Move,
         Turn,
-        Stop,
-        Null,
     }
 
     [Serializable]
@@ -112,9 +110,9 @@ namespace AV00.Controllers.MotorController
 
         private void InitializeCommandQueues()
         {
-            foreach(EnumMotorCommands command in motorRegistry.Keys)
+            foreach (EnumMotorCommands command in Enum.GetValues(typeof(EnumMotorCommands)))
             {
-                MotorCommandQueues.Add(command, new Queue<MotorCommandData>());
+                motorCommandQueues.Add(command, new Queue<MotorCommandData>());
             }
         }
 
@@ -128,40 +126,41 @@ namespace AV00.Controllers.MotorController
         }
 
         // Compatability API
-        public void Move(MotorCommandData MotorRequest)
+        public void Move(MotorCommandData MotorRequest, CancellationToken Token)
         {
-            Run(MotorRequest);
+            Run(MotorRequest, Token);
         }
 
         // Compatability API
-        public void Turn(MotorCommandData MotorRequest)
+        public void Turn(MotorCommandData MotorRequest, CancellationToken Token)
         {
-            Run(MotorRequest);
+            Run(MotorRequest, Token);
         }
 
         // Compatability API
-        public void Stop(MotorCommandData MotorRequest) 
+        public void Stop(MotorCommandData MotorRequest, CancellationToken Token) 
         {
             HardStop(MotorRequest);
         }
 
-        public void Run(MotorCommandData MotorRequest)
+        public void Run(MotorCommandData MotorRequest, CancellationToken Token)
         {
+            Token.ThrowIfCancellationRequested();
             IMotor RequestedMotor = motorRegistry[MotorRequest.Command].Motor;
             WriteLogFile(RequestedMotor, MotorRequest);
             if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
             {
-                GradualStop(RequestedMotor, MotorRequest);
+                GradualStop(RequestedMotor, MotorRequest, Token);
             }
             RequestedMotor.CurrentDirection = MotorRequest.Direction;
             if (MotorRequest.PwmAmount == RequestedMotor.CurrentPwmAmount) { return; }
             else if (MotorRequest.PwmAmount > RequestedMotor.CurrentPwmAmount)
             {
-                Accelerate(RequestedMotor, MotorRequest);
+                Accelerate(RequestedMotor, MotorRequest, Token);
             }
             else if (MotorRequest.PwmAmount < RequestedMotor.CurrentPwmAmount)
             {
-                Decelerate(RequestedMotor, MotorRequest);
+                Decelerate(RequestedMotor, MotorRequest, Token);
             }
         }
 
@@ -171,14 +170,14 @@ namespace AV00.Controllers.MotorController
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
         }
 
-        private void GradualStop(IMotor Motor, MotorCommandData MotorRequest)
+        private void GradualStop(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
         {
-            Decelerate(Motor, MotorRequest);
+            Decelerate(Motor, MotorRequest, Token);
         }
 
         // A cancelled Decelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
         // between motor commands, and a quicker response time
-        private void Decelerate(IMotor Motor, MotorCommandData MotorRequest)
+        private void Decelerate(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
         {
             ushort targetPwm = MotorRequest.PwmAmount;
             if (targetPwm >= Motor.CurrentPwmAmount) { return; }
@@ -188,7 +187,7 @@ namespace AV00.Controllers.MotorController
             Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Decelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount > targetPwm)
             {
-                if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }
+                Token.ThrowIfCancellationRequested();
                 Motor.CurrentPwmAmount -= pwmChangeAmount;
                 if (Motor.CurrentPwmAmount < targetPwm) { Motor.CurrentPwmAmount = targetPwm; }
                 if (Motor.CurrentPwmAmount == stopAmount) { Motor.CurrentPwmAmount = 0; };
@@ -199,7 +198,7 @@ namespace AV00.Controllers.MotorController
 
         // A cancelled Accelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
         // between motor commands, and a quicker response time
-        private void Accelerate(IMotor Motor, MotorCommandData MotorRequest)
+        private void Accelerate(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
         {
             ushort targetPwm = MotorRequest.PwmAmount;
             ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
@@ -211,7 +210,7 @@ namespace AV00.Controllers.MotorController
             Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Accelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount < targetPwm)
             {
-                if (MotorRequest.CancellationToken.IsCancellationRequested) { return; }
+                Token.ThrowIfCancellationRequested();
                 Motor.CurrentPwmAmount += pwmChangeAmount;
                 if (Motor.CurrentPwmAmount > targetPwm) { Motor.CurrentPwmAmount = targetPwm; }
                 SetDutyAndDirection(Motor);

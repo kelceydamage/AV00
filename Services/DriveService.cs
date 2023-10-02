@@ -18,9 +18,8 @@ namespace AV00.Services
         private readonly int updateFrequency = 10;
         private readonly int backoffFrequencyMs = 10;
         private readonly bool enableDebugLogging = false;
-        private bool isOverrideInQueue = false;
-        private Dictionary<EnumMotorCommands, bool> activeOverrides = new();
-        private CancellationTokenSource queueRunnerTokenSource = new();
+        private Dictionary<EnumMotorCommands, MotorCommandData> activeOverrides = new();
+        private Dictionary<EnumMotorCommands, CancellationTokenSource> cancellationSources = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -42,6 +41,14 @@ namespace AV00.Services
             }
         }
 
+        private void InitializeCancellationTokenSources()
+        {
+            foreach (EnumMotorCommands command in Enum.GetValues(typeof(EnumMotorCommands)))
+            {
+                cancellationSources.Add(command, new());
+            }
+        }
+
         private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
             Console.WriteLine($"DRIVER-SERVICE: [Received] MotorEvent {WireMessage[3].ConvertToString()}");
@@ -50,9 +57,10 @@ namespace AV00.Services
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
-                    Console.WriteLine($"Sending Cancellation Token");
-                    activeOverrides[motorEvent.Data.Command] = true;
-                    queueRunnerTokenSource.Cancel();
+                    Console.WriteLine($"Sending Cancellation Token for source: {motorEvent.Data.Command}");
+                    cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
+                    source?.Cancel();
+                    activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
                 }
                 motorController.MotorCommandQueues[motorEvent.Data.Command].Enqueue(motorEvent.Data);
             }
@@ -68,45 +76,58 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
+                    Dictionary<EnumMotorCommands, Task> ActiveTasks = new();
                     while (true)
                     {
-                        CancellationToken token = queueRunnerTokenSource.Token;
-                        Task.WaitAll(
-                            motorController.MotorCommandQueues.Values.Select((queue, queueType
-                        ) => ProcessQueue(queue, (EnumMotorCommands)queueType)).ToArray(), token);
-                        Thread.Sleep(updateFrequency);
-                        if (token.IsCancellationRequested)
+                        foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                         {
-                            Console.WriteLine($"DRIVER-SERVICE: [Info] QueueRunner cancelled");
+                            ActiveTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
+                        }
+                        Task.WaitAll(ActiveTasks.Values.ToArray());
+                        
+                        Thread.Sleep(updateFrequency);
+                        foreach (var (name, source) in cancellationSources)
+                        {
+                            if (source.Token.IsCancellationRequested)
+                            {
+                                Console.WriteLine($"DRIVER-SERVICE: [Info] QueueRunner cancelled");
+                                cancellationSources[name] = new();
+                            }
                         }
                     }
                 }
             );
         }
 
-        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType)
+        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType, CancellationToken Token)
         {
             await Task.Run(() =>
                 {
+                    Token.ThrowIfCancellationRequested();
                     int NumberPendingOfMotorEvents = MotorCommandQueue.Count;
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
-                        if (activeOverrides[CommandQueueType] && currentCommand.Mode != EnumExecutionMode.Override)
+                        if (Token.IsCancellationRequested && currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
                         {
                             //IssueCommandReceipt(currentCommand, EnumEventProcessingState.Rejected, "Override in queue");
                             continue;
                         }
-                        Execute(currentCommand);
+                        else if (Token.IsCancellationRequested && currentCommand.CommandId == activeOverrides[CommandQueueType].CommandId)
+                        {
+                            cancellationSources[CommandQueueType] = new();
+                        }
+                        try
+                        {
+                            motorController.Run(currentCommand, cancellationSources[CommandQueueType].Token);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {e.Message}");
+                        }
                     }
-                    activeOverrides[CommandQueueType] = false;
-                }
+                }, Token
             );
-        }
-
-        private void Execute(MotorCommandData CurrentCommand)
-        {
-            motorController.Run(CurrentCommand);
         }
 
         private void IssueCommandReceipt(MotorEvent CurrentEvent, EnumEventProcessingState ExecutionState, string ReasonForExecutionState)
