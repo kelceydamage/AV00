@@ -41,16 +41,6 @@ namespace AV00.Controllers.MotorController
         Null,
     }
 
-    public class CancellationToken
-    {
-        public bool IsCancellationRequested
-        { 
-            get => isCancellationRequested;
-            set => isCancellationRequested = value;
-        }
-        private bool isCancellationRequested = false;
-    }
-
     [Serializable]
     public readonly struct MotorCommandData
     {
@@ -64,8 +54,8 @@ namespace AV00.Controllers.MotorController
         private readonly EnumMotorCommands command;
         public EnumExecutionMode Mode { get => mode; }
         private readonly EnumExecutionMode mode;
-        public CancellationToken CancellationToken { get => cancellationToken; }
-        private readonly CancellationToken cancellationToken;
+        public CustomCancellationToken CancellationToken { get => cancellationToken; }
+        private readonly CustomCancellationToken cancellationToken;
 
         [JsonConstructor]
         public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, Guid CommandId, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
@@ -75,7 +65,7 @@ namespace AV00.Controllers.MotorController
             pwmAmount = PwmAmount;
             mode = Mode;
             commandId = CommandId;
-            cancellationToken = new CancellationToken();
+            cancellationToken = new CustomCancellationToken();
         }
     }
 
@@ -85,7 +75,9 @@ namespace AV00.Controllers.MotorController
         private readonly LockableMotor driveMotor;
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
-        private readonly Dictionary<EnumMotorCommands, LockableMotor> MotorRegistry = new();
+        private readonly Dictionary<EnumMotorCommands, LockableMotor> motorRegistry = new();
+        public Dictionary<EnumMotorCommands, Queue<MotorCommandData>> MotorCommandQueues { get => motorCommandQueues; }
+        private readonly Dictionary<EnumMotorCommands, Queue<MotorCommandData>> motorCommandQueues = new();
 
         public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
@@ -93,14 +85,15 @@ namespace AV00.Controllers.MotorController
             turningMotor = new LockableMotor(TurningMotor);
             driveMotor = new LockableMotor(DriveMotor);
             servoBoardController = ServoBoardController;
-            MotorRegistry.Add(EnumMotorCommands.Move, driveMotor);
-            MotorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
+            motorRegistry.Add(EnumMotorCommands.Move, driveMotor);
+            motorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
+            InitializeCommandQueues();
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.
         public LockableMotor GetMotorByCommand(EnumMotorCommands MotorCommand)
         {
-            return MotorRegistry[MotorCommand];
+            return motorRegistry[MotorCommand];
         }
 
         public void Test()
@@ -115,6 +108,14 @@ namespace AV00.Controllers.MotorController
             Console.WriteLine($"{driveMotor.Motor.Name} Current PWM: {driveMotor.Motor.CurrentPwmAmount}");
             Console.WriteLine($"{turningMotor.Motor.Name} - Test Complete -----------------");
             Console.WriteLine($"{driveMotor.Motor.Name} - Test Complete -----------------");
+        }
+
+        private void InitializeCommandQueues()
+        {
+            foreach(EnumMotorCommands command in motorRegistry.Keys)
+            {
+                MotorCommandQueues.Add(command, new Queue<MotorCommandData>());
+            }
         }
 
         private static void WriteLogFile(IMotor RequestedMotor, MotorCommandData MotorRequest)
@@ -146,7 +147,7 @@ namespace AV00.Controllers.MotorController
 
         public void Run(MotorCommandData MotorRequest)
         {
-            IMotor RequestedMotor = MotorRegistry[MotorRequest.Command].Motor;
+            IMotor RequestedMotor = motorRegistry[MotorRequest.Command].Motor;
             WriteLogFile(RequestedMotor, MotorRequest);
             if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
             {
@@ -220,8 +221,8 @@ namespace AV00.Controllers.MotorController
 
         private void HardStop(MotorCommandData MotorRequest)
         {
-            MotorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0;
-            SetDutyAndDirection(MotorRegistry[MotorRequest.Command].Motor);
+            motorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0;
+            SetDutyAndDirection(motorRegistry[MotorRequest.Command].Motor);
         }
     }
 }
