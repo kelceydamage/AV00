@@ -76,6 +76,7 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
+                    Console.WriteLine($"QUEUE-RUNNER: [Info] QueueRunner started");
                     Dictionary<EnumMotorCommands, Task> ActiveTasks = new();
                     while (true)
                     {
@@ -86,14 +87,6 @@ namespace AV00.Services
                         Task.WaitAll(ActiveTasks.Values.ToArray());
                         
                         Thread.Sleep(updateFrequency);
-                        foreach (var (name, source) in cancellationSources)
-                        {
-                            if (source.Token.IsCancellationRequested)
-                            {
-                                Console.WriteLine($"DRIVER-SERVICE: [Info] QueueRunner cancelled");
-                                cancellationSources[name] = new();
-                            }
-                        }
                     }
                 }
             );
@@ -103,6 +96,7 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
+                    Console.WriteLine($"QUEUE-RUNNER: [Info] Executing queue - {CommandQueueType}");
                     Token.ThrowIfCancellationRequested();
                     int NumberPendingOfMotorEvents = MotorCommandQueue.Count;
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
