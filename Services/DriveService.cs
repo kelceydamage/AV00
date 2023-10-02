@@ -120,7 +120,15 @@ namespace AV00.Services
                     {
                         Console.WriteLine("1");
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
-                        Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId} override?={activeOverrides[CommandQueueType].CommandId}");
+                        var q = activeOverrides.TryGetValue(CommandQueueType, out MotorCommandData O);
+                        if (q)
+                        {
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId} override?={O.CommandId}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId}");
+                        }
                         Console.WriteLine("2");
                         if (Token.IsCancellationRequested && currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
                         {
