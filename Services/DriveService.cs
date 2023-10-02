@@ -77,16 +77,26 @@ namespace AV00.Services
             await Task.Run(() =>
                 {
                     Console.WriteLine($"QUEUE-RUNNER: [Info] QueueRunner started");
-                    Dictionary<EnumMotorCommands, Task> ActiveTasks = new();
+                    Dictionary<EnumMotorCommands, Task> activeTasks = new();
                     while (true)
                     {
+                    try
+                    {
+                        Console.WriteLine("1");
                         foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                         {
-                            ActiveTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
+                            Console.WriteLine($"1 {queuetype}");
+                            activeTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
                         }
-                        Task.WaitAll(ActiveTasks.Values.ToArray());
-                        Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
-                        Thread.Sleep(updateFrequency);
+                            Console.WriteLine("1 - wait tasks");
+                            Task.WaitAll(activeTasks.Values.ToArray());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e}");
+                    }
+                    Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
+                    Thread.Sleep(updateFrequency);
                     }
                 }
             );
