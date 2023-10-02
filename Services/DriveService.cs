@@ -86,11 +86,11 @@ namespace AV00.Services
                         {
                             foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                             {
-                                if (cancellationSources[queuetype].IsCancellationRequested)
-                                {
-                                    Console.WriteLine($"QUEUE-RUNNER: [New] creating new cancellation source");
+                                //if (cancellationSources[queuetype].IsCancellationRequested)
+                                //{
+                                //    Console.WriteLine($"QUEUE-RUNNER: [New] creating new cancellation source");
                                     cancellationSources[queuetype] = new();
-                                }
+                                //}
                                 activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
                             }
                         }
@@ -158,7 +158,7 @@ namespace AV00.Services
                             Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {currentCommand.CommandId} - {e.Message}");
                         }
                     }
-                }, Token
+                }
             );
         }
 
