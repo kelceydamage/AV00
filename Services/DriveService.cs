@@ -50,6 +50,7 @@ namespace AV00.Services
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
+                    Console.WriteLine($"Sending Cancellation Token");
                     activeOverrides[motorEvent.Data.Command] = true;
                     queueRunnerTokenSource.Cancel();
                 }
@@ -74,6 +75,10 @@ namespace AV00.Services
                             motorController.MotorCommandQueues.Values.Select((queue, queueType
                         ) => ProcessQueue(queue, (EnumMotorCommands)queueType)).ToArray(), token);
                         Thread.Sleep(updateFrequency);
+                        if (token.IsCancellationRequested)
+                        {
+                            Console.WriteLine($"DRIVER-SERVICE: [Info] QueueRunner cancelled");
+                        }
                     }
                 }
             );

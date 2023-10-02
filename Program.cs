@@ -80,7 +80,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
             serviceBusClient.PushTask(myEvent);
 
-            myData = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, Guid.NewGuid());
+            myData = new(EnumMotorCommands.Move, MotorDirection.Forwards, 1024, Guid.NewGuid(), EnumExecutionMode.Override);
             myEvent = new("DriveService", myData, EnumEventType.Event, myData.CommandId);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
             serviceBusClient.PushTask(myEvent);
