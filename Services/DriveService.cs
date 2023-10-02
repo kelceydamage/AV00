@@ -5,6 +5,7 @@ using AV00.Communication;
 using NetMQ;
 using AV00.Shared;
 using Transport.Messages;
+using System.Threading;
 
 namespace AV00.Services
 {
@@ -85,6 +86,11 @@ namespace AV00.Services
                         {
                             foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                             {
+                                if (cancellationSources[queuetype].IsCancellationRequested)
+                                {
+                                    Console.WriteLine($"QUEUE-RUNNER: [New] creating new cancellation source");
+                                    cancellationSources[queuetype] = new();
+                                }
                                 activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
                             }
                         }
@@ -143,7 +149,7 @@ namespace AV00.Services
                         try
                         {
                             Console.WriteLine($"QUEUE-RUNNER: [Info] Given token {Token.IsCancellationRequested} Active token {cancellationSources[CommandQueueType].Token.IsCancellationRequested}");
-                            Console.WriteLine($"QUEUE-RUNNER: [Info] executing override");
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] executing command");
                             // This is not working as intended
                             motorController.Run(currentCommand, cancellationSources[CommandQueueType].Token);
                         }
