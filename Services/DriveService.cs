@@ -17,9 +17,7 @@ namespace AV00.Services
         private readonly TaskExecutorClient taskExecutorClient;
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 10;
-        private readonly int backoffFrequencyMs = 10;
         private readonly bool enableDebugLogging = false;
-        private bool isOverrideInQueue = false;
         private Dictionary<EnumMotorCommands, MotorCommandData> activeOverrides = new();
         private Dictionary<EnumMotorCommands, CancellationTokenSource> cancellationSources = new();
 
@@ -63,9 +61,7 @@ namespace AV00.Services
                     Console.WriteLine($"Cancellation Token for source: {motorEvent.Data.Command}");
                     cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
                     source?.Cancel();
-                    Console.WriteLine($"Token state: {source?.Token.IsCancellationRequested}");
                     activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
-                    isOverrideInQueue = true;
                 }
                 motorController.MotorCommandQueues[motorEvent.Data.Command].Enqueue(motorEvent.Data);
             }
@@ -89,73 +85,41 @@ namespace AV00.Services
                         {
                             foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                             {
-                                //if (cancellationSources[queuetype].IsCancellationRequested)
-                                //{
-                                //    Console.WriteLine($"QUEUE-RUNNER: [New] creating new cancellation source");
-                                //    cancellationSources[queuetype] = new();
-                                //}
-                                activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token, isOverrideInQueue);
+                                activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
+                                Task.WaitAll(activeTasks.Values.ToArray());
                             }
                         }
                         catch (Exception e)
                         {
                             Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e.Message}");
                         }
-                        {
-                            try
-                            {
-                                Task.WaitAll(activeTasks.Values.ToArray());
-                                Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine($"QUEUE-RUNNER: [Error] something broke2 - {e.Message}");
-                            }
-                            Thread.Sleep(updateFrequency);
-                        }
+                        Thread.Sleep(updateFrequency);
                     }
                 }
             );
         }
 
-        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType, CancellationToken Token, bool IsOverrideInQueue)
+        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType, CancellationToken Token)
         {
             await Task.Run(() =>
                 {
                     int NumberPendingOfMotorEvents = MotorCommandQueue.Count;
                     Console.WriteLine($"QUEUE-RUNNER: [Info] Executing queue - {CommandQueueType}[{NumberPendingOfMotorEvents}]");
-                    //Token.ThrowIfCancellationRequested();
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
-                        Console.WriteLine("1");
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
-                        var q = activeOverrides.TryGetValue(CommandQueueType, out MotorCommandData O);
-                        if (q)
+                        if (Token.IsCancellationRequested)
                         {
-                            Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId} override?={O.CommandId}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId}");
-                        }
-                        Console.WriteLine("2");
-                        if (Token.IsCancellationRequested && currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
-                        {
-                            //IssueCommandReceipt(currentCommand, EnumEventProcessingState.Rejected, "Override in queue");
-                            continue;
-                        }
-                        else if (Token.IsCancellationRequested && currentCommand.CommandId == activeOverrides[CommandQueueType].CommandId)
-                        {
+                            if (currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
+                            {
+                                continue;
+                            }
                             Console.WriteLine($"QUEUE-RUNNER: creating new cancellationSource");
                             cancellationSources[CommandQueueType] = new();
                         }
                         try
                         {
-                            Console.WriteLine($"QUEUE-RUNNER: [Info] Given token {Token.IsCancellationRequested} Active token {cancellationSources[CommandQueueType].Token.IsCancellationRequested}");
-                            Console.WriteLine($"QUEUE-RUNNER: [Info] executing command");
-                            // This is not working as intended
                             motorController.Run(currentCommand, cancellationSources[CommandQueueType].Token);
-                            isOverrideInQueue = false;
                         }
                         catch (Exception e)
                         {
