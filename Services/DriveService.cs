@@ -85,7 +85,7 @@ namespace AV00.Services
                             ActiveTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
                         }
                         Task.WaitAll(ActiveTasks.Values.ToArray());
-                        
+                        Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
                         Thread.Sleep(updateFrequency);
                     }
                 }
