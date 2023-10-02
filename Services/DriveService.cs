@@ -62,6 +62,7 @@ namespace AV00.Services
                     Console.WriteLine($"Cancellation Token for source: {motorEvent.Data.Command}");
                     cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
                     source?.Cancel();
+                    Console.WriteLine($"Token state: {source?.Token}");
                     activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
                 }
                 motorController.MotorCommandQueues[motorEvent.Data.Command].Enqueue(motorEvent.Data);
@@ -89,7 +90,7 @@ namespace AV00.Services
                                 //if (cancellationSources[queuetype].IsCancellationRequested)
                                 //{
                                 //    Console.WriteLine($"QUEUE-RUNNER: [New] creating new cancellation source");
-                                    cancellationSources[queuetype] = new();
+                                //    cancellationSources[queuetype] = new();
                                 //}
                                 activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
                             }
