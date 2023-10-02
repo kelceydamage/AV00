@@ -28,6 +28,7 @@ namespace AV00.Services
             updateFrequency = int.Parse(Settings["DriveServiceUpdateFrequency"] ?? throw new Exception());
             taskExecutorClient.RegisterServiceEventCallback(ServiceName, OnTaskEventCallback);
             enableDebugLogging = bool.Parse(Settings["RelayEnableDebugLogging"] ?? throw new Exception());
+            InitializeCancellationTokenSources();
         }
 
         public void Start()
@@ -82,18 +83,16 @@ namespace AV00.Services
                     {
                     try
                     {
-                        Console.WriteLine("1");
                         foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                         {
-                            Console.WriteLine($"1 {queuetype}");
+                            Console.WriteLine($"queuetype {queuetype}");
                             activeTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
                         }
-                            Console.WriteLine("1 - wait tasks");
-                            Task.WaitAll(activeTasks.Values.ToArray());
+                        Task.WaitAll(activeTasks.Values.ToArray());
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e}");
+                        Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e.Message}");
                     }
                     Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
                     Thread.Sleep(updateFrequency);

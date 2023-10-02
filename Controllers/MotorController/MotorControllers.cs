@@ -112,6 +112,7 @@ namespace AV00.Controllers.MotorController
         {
             foreach (EnumMotorCommands command in Enum.GetValues(typeof(EnumMotorCommands)))
             {
+                Console.WriteLine($"InitializeCommandQueues {command}");
                 motorCommandQueues.Add(command, new Queue<MotorCommandData>());
             }
         }
