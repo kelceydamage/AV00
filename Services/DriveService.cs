@@ -20,6 +20,7 @@ namespace AV00.Services
         private readonly bool enableDebugLogging = false;
         private bool isOverrideInQueue = false;
         private Dictionary<EnumMotorCommands, bool> activeOverrides = new();
+        private CancellationTokenSource queueRunnerTokenSource = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
@@ -50,6 +51,7 @@ namespace AV00.Services
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
                     activeOverrides[motorEvent.Data.Command] = true;
+                    queueRunnerTokenSource.Cancel();
                 }
                 motorController.MotorCommandQueues[motorEvent.Data.Command].Enqueue(motorEvent.Data);
             }
@@ -67,7 +69,10 @@ namespace AV00.Services
                 {
                     while (true)
                     {
-                        Task.WaitAll(motorController.MotorCommandQueues.Values.Select((queue, queueType) => ProcessQueue(queue, (EnumMotorCommands)queueType)).ToArray());
+                        CancellationToken token = queueRunnerTokenSource.Token;
+                        Task.WaitAll(
+                            motorController.MotorCommandQueues.Values.Select((queue, queueType
+                        ) => ProcessQueue(queue, (EnumMotorCommands)queueType)).ToArray(), token);
                         Thread.Sleep(updateFrequency);
                     }
                 }
