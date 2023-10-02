@@ -81,20 +81,29 @@ namespace AV00.Services
                     Dictionary<EnumMotorCommands, Task> activeTasks = new();
                     while (true)
                     {
-                    try
-                    {
-                        foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
+                        try
                         {
-                            activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
+                            foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
+                            {
+                                activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
+                            }
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e.Message}");
-                    }
-                    Task.WaitAll(activeTasks.Values.ToArray());
-                    Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
-                    Thread.Sleep(updateFrequency);
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e.Message}");
+                        }
+                        {
+                            try
+                            {
+                                Task.WaitAll(activeTasks.Values.ToArray());
+                                Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($"QUEUE-RUNNER: [Error] something broke2 - {e.Message}");
+                            }
+                            Thread.Sleep(updateFrequency);
+                        }
                     }
                 }
             );
@@ -109,8 +118,10 @@ namespace AV00.Services
                     Token.ThrowIfCancellationRequested();
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
+                        Console.WriteLine("1");
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
                         Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId} override?={activeOverrides[CommandQueueType].CommandId}");
+                        Console.WriteLine("2");
                         if (Token.IsCancellationRequested && currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
                         {
                             //IssueCommandReceipt(currentCommand, EnumEventProcessingState.Rejected, "Override in queue");
