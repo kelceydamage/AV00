@@ -58,7 +58,7 @@ namespace AV00.Services
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
-                    Console.WriteLine($"Sending Cancellation Token for source: {motorEvent.Data.Command}");
+                    Console.WriteLine($"Cancellation Token for source: {motorEvent.Data.Command}");
                     cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
                     source?.Cancel();
                     activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
@@ -110,6 +110,7 @@ namespace AV00.Services
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
+                        Console.WriteLine($"QUEUE-RUNNER: [Info] token={Token.IsCancellationRequested} id={currentCommand.CommandId} override?={activeOverrides[CommandQueueType].CommandId}");
                         if (Token.IsCancellationRequested && currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
                         {
                             //IssueCommandReceipt(currentCommand, EnumEventProcessingState.Rejected, "Override in queue");
@@ -122,7 +123,9 @@ namespace AV00.Services
                         }
                         try
                         {
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] Given token {Token.IsCancellationRequested} Active token {cancellationSources[CommandQueueType].Token.IsCancellationRequested}");
                             Console.WriteLine($"QUEUE-RUNNER: [Info] executing override");
+                            // This is not working as intended
                             motorController.Run(currentCommand, cancellationSources[CommandQueueType].Token);
                         }
                         catch (Exception e)
