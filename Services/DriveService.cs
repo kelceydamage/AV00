@@ -85,15 +85,14 @@ namespace AV00.Services
                     {
                         foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                         {
-                            Console.WriteLine($"queuetype {queuetype}");
                             activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
                         }
-                        Task.WaitAll(activeTasks.Values.ToArray());
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine($"QUEUE-RUNNER: [Error] something broke - {e.Message}");
                     }
+                    Task.WaitAll(activeTasks.Values.ToArray());
                     Console.WriteLine($"QUEUE-RUNNER: [Info] Finished queues");
                     Thread.Sleep(updateFrequency);
                     }
@@ -105,9 +104,9 @@ namespace AV00.Services
         {
             await Task.Run(() =>
                 {
-                    Console.WriteLine($"QUEUE-RUNNER: [Info] Executing queue - {CommandQueueType}");
-                    Token.ThrowIfCancellationRequested();
                     int NumberPendingOfMotorEvents = MotorCommandQueue.Count;
+                    Console.WriteLine($"QUEUE-RUNNER: [Info] Executing queue - {CommandQueueType}[{NumberPendingOfMotorEvents}]");
+                    Token.ThrowIfCancellationRequested();
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
@@ -118,15 +117,17 @@ namespace AV00.Services
                         }
                         else if (Token.IsCancellationRequested && currentCommand.CommandId == activeOverrides[CommandQueueType].CommandId)
                         {
+                            Console.WriteLine($"QUEUE-RUNNER: creating new cancellationSource");
                             cancellationSources[CommandQueueType] = new();
                         }
                         try
                         {
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] executing override");
                             motorController.Run(currentCommand, cancellationSources[CommandQueueType].Token);
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {e.Message}");
+                            Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {currentCommand.CommandId} - {e.Message}");
                         }
                     }
                 }, Token
