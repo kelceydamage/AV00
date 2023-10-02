@@ -86,7 +86,7 @@ namespace AV00.Services
                         foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                         {
                             Console.WriteLine($"queuetype {queuetype}");
-                            activeTasks.Add(queuetype, ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token));
+                            activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
                         }
                         Task.WaitAll(activeTasks.Values.ToArray());
                     }
