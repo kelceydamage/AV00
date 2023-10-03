@@ -85,7 +85,7 @@ namespace AV00.Services
                         {
                             foreach (var (queuetype, queue) in motorController.MotorCommandQueues)
                             {
-                                activeTasks[queuetype] = ProcessQueue(queue, queuetype, cancellationSources[queuetype].Token);
+                                activeTasks[queuetype] = ProcessQueue(queue, queuetype);
                                 Task.WaitAll(activeTasks.Values.ToArray());
                             }
                         }
@@ -99,7 +99,7 @@ namespace AV00.Services
             );
         }
 
-        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType, CancellationToken Token)
+        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType)
         {
             await Task.Run(() =>
                 {
@@ -108,7 +108,7 @@ namespace AV00.Services
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
                         MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
-                        if (Token.IsCancellationRequested)
+                        if (cancellationSources[CommandQueueType].Token.IsCancellationRequested)
                         {
                             if (currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
                             {
