@@ -52,8 +52,6 @@ namespace AV00.Controllers.MotorController
         private readonly EnumMotorCommands command;
         public EnumExecutionMode Mode { get => mode; }
         private readonly EnumExecutionMode mode;
-        public CustomCancellationToken CancellationToken { get => cancellationToken; }
-        private readonly CustomCancellationToken cancellationToken;
 
         [JsonConstructor]
         public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, Guid CommandId, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
@@ -63,7 +61,6 @@ namespace AV00.Controllers.MotorController
             pwmAmount = PwmAmount;
             mode = Mode;
             commandId = CommandId;
-            cancellationToken = new CustomCancellationToken();
         }
     }
 

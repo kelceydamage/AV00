@@ -50,6 +50,7 @@ namespace AV00.Services
             }
         }
 
+        // This task has sole authority to cancel cancellation sources.
         private bool OnTaskEventCallback(NetMQMessage WireMessage)
         {
             Console.WriteLine($"DRIVER-SERVICE: [Received] MotorEvent {WireMessage[3].ConvertToString()}");
@@ -58,7 +59,7 @@ namespace AV00.Services
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
                 if (motorEvent.Data.Mode == EnumExecutionMode.Override)
                 {
-                    Console.WriteLine($"Cancellation Token for source: {motorEvent.Data.Command}");
+                    Console.WriteLine($"DRIVER-SERVICE: [Warning] Cancelling Token for source: {motorEvent.Data.Command}");
                     cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
                     source?.Cancel();
                     activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
@@ -99,6 +100,7 @@ namespace AV00.Services
             );
         }
 
+        // This task has sole authority to create new cancellation sources.
         private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType)
         {
             await Task.Run(() =>
@@ -114,7 +116,7 @@ namespace AV00.Services
                             {
                                 continue;
                             }
-                            Console.WriteLine($"QUEUE-RUNNER: creating new cancellationSource");
+                            Console.WriteLine($"QUEUE-RUNNER: [Info] creating new cancellationSource");
                             cancellationSources[CommandQueueType] = new();
                         }
                         try
