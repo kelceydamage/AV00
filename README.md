@@ -7,7 +7,6 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 ![Untitled drawing (1)](https://github.com/kelceydamage/sensors-test/assets/16090219/1d6d7f56-4ac8-4e3f-91a6-4593bf0f7f37)
 
 ## Issues
-* I tried to implement Motor execution with async threads. This was a bad idea. Despite spending cycles ordering the commands, there is a chance they execute out of order. My next approach will be to use a long running thread that executes commands in order. Something like subscriber -> main thread (filter - sort) -> queue (with cancellation) -> single child thread to execure each item in the queue (or perhaps a thread per motor).
 
 # Version 1 Outstanding Goals
 ## TODO - Embedded Software (Next Phase)
