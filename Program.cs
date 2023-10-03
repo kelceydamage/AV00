@@ -55,7 +55,7 @@ namespace AV00
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A39012(127, 9, "TurningMotor"),
+                new MDD10A39012(127, 9, "TurningMotor"),  
                 new MDD10A55072(112, 8, "DriveMotor")
             );
 
@@ -75,7 +75,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
             serviceBusClient.PushTask(myEvent);
 
-            myData = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, Guid.NewGuid());
+            myData = new(EnumMotorCommands.Move, MotorDirection.Forwards, 0, Guid.NewGuid(), EnumExecutionMode.Override);
             myEvent = new("DriveService", myData, EnumEventType.Event, myData.CommandId);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {myEvent.Id}");
             serviceBusClient.PushTask(myEvent);
