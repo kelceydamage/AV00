@@ -8,7 +8,7 @@ using AV00.Drivers.IO;
 using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
 using AV00.Communication;
-using AV00.Shared;
+using AV00_Shared.FlowControl;
 
 namespace AV00
 {

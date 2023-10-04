@@ -1,8 +1,8 @@
 ﻿using System.Device.Gpio;
 using System.Text.Json.Serialization;
-using AV00.Shared;
 using AV00.Drivers.Motors;
 using AV00.Drivers.IO;
+using AV00_Shared.FlowControl;
 
 namespace AV00.Controllers.MotorController
 {
