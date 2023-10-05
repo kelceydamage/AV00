@@ -3,9 +3,8 @@ using System.Collections.Specialized;
 using System.Configuration;
 using AV00.Communication;
 using NetMQ;
-using AV00.Shared;
 using Transport.Messages;
-using System.Threading;
+using AV00_Shared.FlowControl;
 
 namespace AV00.Services
 {
