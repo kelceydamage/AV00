@@ -10,7 +10,7 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 
 # Version 1 Outstanding Goals
 ## TODO - High Level
-* [ ] Create a desktop application to view telemery over WIFI.
+* [ ] Create a desktop application to view telemery over WIFI. - Halted for now due to this issue https://github.com/xamarin/Xamarin.Forms/issues/10818
 
 ## TODO - Embedded Software (Services)
 * [ ] Update the DeviceRegistry to be useful.
@@ -31,6 +31,9 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 
 ## TODO - Desktop Software (Event Viewer / Control) 
 [AV00 Control Application Repo](https://github.com/kelceydamage/AV00-Control-Application)
+
+* Halted for now due to this issue https://github.com/xamarin/Xamarin.Forms/issues/10818
+
 * [x] Implement backing DB for storing event stream and powering UI.
 * [ ] Display current events as they happen.
 * [ ] Allow filtering of events.
