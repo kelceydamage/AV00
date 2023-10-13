@@ -9,8 +9,10 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 ## Issues
 
 # Version 1 Outstanding Goals
-## TODO - Embedded Software (Next Phase)
-* [x] Create a transport layer to allow services to communicate with each other.
+## TODO - High Level
+* [ ] Create a desktop application to view telemery over WIFI.
+
+## TODO - Embedded Software (Services)
 * [ ] Update the DeviceRegistry to be useful.
 * [x] Add the MotorController/DriveService to the ServiceRegistry
 * [ ] Create a telemetry service for the robot.
@@ -18,19 +20,27 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 * [ ] Create a basic feedback loop the stops the motors near an obstacle.
 * [ ] Add a gyro sensor to the robot.
 * [ ] Create a basic feedback loop that keeps the robot driving straight.
-* [ ] Remote input/override service.
-* [ ] Create a basic console status screen while running program from terminal.
 * [x] Implement a strategy for handling blocking, non-blocking, and override motor operations. ![Motor Command Execution Flow (3)](https://github.com/kelceydamage/AV00/assets/16090219/5c59d172-462f-49ca-ab8d-6c5c2ca6b29d)
 
-## TODO - Desktop Software (Next Phase)
-* [ ] Create a desktop application to view telemery over WIFI.
+## TODO - Shared Libraries
+[AV00 Shared](https://github.com/kelceydamage/AV00-Shared)
+
+## TODO - Interservice Communication (Transport Layer)
+[AV00 Transport](https://github.com/kelceydamage/AV00-Transport)
+* [x] Create a transport layer to allow services to communicate with each other.
+
+## TODO - Desktop Software (Event Viewer / Control) 
+[AV00 Control Application Repo](https://github.com/kelceydamage/AV00-Control-Application)
+* [x] Implement backing DB for storing event stream and powering UI.
+* [ ] Display current events as they happen.
+* [ ] Allow filtering of events.
 * [ ] Remote input/override client.
 
-## TODO - Infra (Next Phase)
+## TODO - Infra (Code Management)
 * [ ] Setup a CI/CD pipeline.
 * [ ] Dockerize the application to run in NV containers.
 
-## TODO - Hardware (Next Phase)
+## TODO - Hardware (Physical Robot)
 * [ ] Add an ultrasonic sensor to the robot.
 * [ ] Add a gyro sensor to the robot.
 * [ ] Run some updated battery driven tests.
@@ -44,9 +54,10 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 ## Nice To Haves
 * [ ] Make the MotorController public functions async to allow non-blocking timed operations.
 * [ ] M3/4 mounts inside the chassis.
+* [ ] Remote input/override service.
+* [ ] Create a basic console status screen while running program from terminal.
 
 # Notes
-
 * Digital Port: IO expansion board offers 28 groups (D0-D27) of digital ports that are led out via Raspberry Pi ports GPIO0~GPIO27 (BCM codes)
 * Requires libgpiod-dev (Could not get to work on JP4)
 * sudo apt install -y libgpiod-dev
