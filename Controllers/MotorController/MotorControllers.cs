@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using AV00.Drivers.Motors;
 using AV00.Drivers.IO;
 using AV00_Shared.FlowControl;
+using AV00_Shared.Models;
 
 namespace AV00.Controllers.MotorController
 {
@@ -40,10 +41,8 @@ namespace AV00.Controllers.MotorController
     }
 
     [Serializable]
-    public readonly struct MotorCommandData
+    public class MotorCommandEventModel : BaseModel, IEventModel
     {
-        public Guid CommandId { get => commandId; }
-        private readonly Guid commandId;
         public PinValue Direction { get => direction; }
         private readonly PinValue direction;
         public ushort PwmAmount { get => pwmAmount; }
@@ -54,13 +53,20 @@ namespace AV00.Controllers.MotorController
         private readonly EnumExecutionMode mode;
 
         [JsonConstructor]
-        public MotorCommandData(EnumMotorCommands Command, PinValue Direction, ushort PwmAmount, Guid CommandId, EnumExecutionMode Mode = EnumExecutionMode.Blocking)
+        public MotorCommandEventModel(
+            string ServiceName, 
+            EnumMotorCommands Command, 
+            PinValue Direction, 
+            ushort PwmAmount, 
+            EnumExecutionMode Mode = EnumExecutionMode.Blocking, 
+            Guid? Id = null,
+            string? TimeStamp = null
+        ) : base(ServiceName, Id, TimeStamp)
         {
             command = Command;
             direction = Direction;
             pwmAmount = PwmAmount;
             mode = Mode;
-            commandId = CommandId;
         }
     }
 
@@ -71,8 +77,8 @@ namespace AV00.Controllers.MotorController
         private readonly PWM servoBoardController;
         private readonly GPIO gpio;
         private readonly Dictionary<EnumMotorCommands, LockableMotor> motorRegistry = new();
-        public Dictionary<EnumMotorCommands, Queue<MotorCommandData>> MotorCommandQueues { get => motorCommandQueues; }
-        private readonly Dictionary<EnumMotorCommands, Queue<MotorCommandData>> motorCommandQueues = new();
+        public Dictionary<EnumMotorCommands, Queue<MotorCommandEventModel>> MotorCommandQueues { get => motorCommandQueues; }
+        private readonly Dictionary<EnumMotorCommands, Queue<MotorCommandEventModel>> motorCommandQueues = new();
 
         public PDSGBGearboxMotorController(GPIO Gpio, PWM ServoBoardController, IMotor TurningMotor, IMotor DriveMotor)
         {
@@ -110,11 +116,11 @@ namespace AV00.Controllers.MotorController
             foreach (EnumMotorCommands command in Enum.GetValues(typeof(EnumMotorCommands)))
             {
                 Console.WriteLine($"InitializeCommandQueues {command}");
-                motorCommandQueues.Add(command, new Queue<MotorCommandData>());
+                motorCommandQueues.Add(command, new Queue<MotorCommandEventModel>());
             }
         }
 
-        private static void WriteLogFile(IMotor RequestedMotor, MotorCommandData MotorRequest)
+        private static void WriteLogFile(IMotor RequestedMotor, MotorCommandEventModel MotorRequest)
         {
             using (StreamWriter outputFile = new(Path.Combine(Environment.CurrentDirectory, "pwm-log.txt"), true))
             {
@@ -124,24 +130,24 @@ namespace AV00.Controllers.MotorController
         }
 
         // Compatability API
-        public void Move(MotorCommandData MotorRequest, CancellationToken Token)
+        public void Move(MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             Run(MotorRequest, Token);
         }
 
         // Compatability API
-        public void Turn(MotorCommandData MotorRequest, CancellationToken Token)
+        public void Turn(MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             Run(MotorRequest, Token);
         }
 
         // Compatability API
-        public void Stop(MotorCommandData MotorRequest, CancellationToken Token) 
+        public void Stop(MotorCommandEventModel MotorRequest, CancellationToken Token) 
         {
             HardStop(MotorRequest);
         }
 
-        public void Run(MotorCommandData MotorRequest, CancellationToken Token)
+        public void Run(MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             Token.ThrowIfCancellationRequested();
             IMotor RequestedMotor = motorRegistry[MotorRequest.Command].Motor;
@@ -168,14 +174,14 @@ namespace AV00.Controllers.MotorController
             servoBoardController.SetChannelPWM(Motor.PwmChannelId, Motor.CurrentPwmAmount);
         }
 
-        private void GradualStop(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
+        private void GradualStop(IMotor Motor, MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             Decelerate(Motor, MotorRequest, Token);
         }
 
         // A cancelled Decelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
         // between motor commands, and a quicker response time
-        private void Decelerate(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
+        private void Decelerate(IMotor Motor, MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             ushort targetPwm = MotorRequest.PwmAmount;
             if (targetPwm >= Motor.CurrentPwmAmount) { return; }
@@ -196,7 +202,7 @@ namespace AV00.Controllers.MotorController
 
         // A cancelled Accelerate will leave the motor running at the last set speed. This is allowed in order to facilite smoother transitions
         // between motor commands, and a quicker response time
-        private void Accelerate(IMotor Motor, MotorCommandData MotorRequest, CancellationToken Token)
+        private void Accelerate(IMotor Motor, MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
             ushort targetPwm = MotorRequest.PwmAmount;
             ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
@@ -216,7 +222,7 @@ namespace AV00.Controllers.MotorController
             }
         }
 
-        private void HardStop(MotorCommandData MotorRequest)
+        private void HardStop(MotorCommandEventModel MotorRequest)
         {
             motorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0;
             SetDutyAndDirection(motorRegistry[MotorRequest.Command].Motor);

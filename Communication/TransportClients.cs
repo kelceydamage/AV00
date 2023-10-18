@@ -1,8 +1,9 @@
 ﻿using System.Configuration;
 using Transport.Generics;
 using Transport.Client;
-using Transport.Messages;
+using Transport.Event;
 using System.Collections.Specialized;
+using AV00_Shared.Models;
 
 namespace AV00.Communication
 {
@@ -52,7 +53,7 @@ namespace AV00.Communication
             ServiceBusProducer = new($">{Connections["ServiceBusClientSocket"].ConnectionString}");
         }
 
-        public void PublishReceipt(Event<TaskExecution> Receipt)
+        public void PublishReceipt(Event<TaskExecutionEventModel> Receipt)
         {
             ServiceBusProducer.SendMQMessage(Receipt.Serialize());
         }

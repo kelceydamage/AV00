@@ -3,12 +3,12 @@ using System.Collections.Specialized;
 using System.Configuration;
 using AV00.Communication;
 using NetMQ;
-using Transport.Messages;
+using Transport.Event;
 using AV00_Shared.FlowControl;
 
 namespace AV00.Services
 {
-    using MotorEvent = Event<MotorCommandData>;
+    using MotorEvent = Event<MotorCommandEventModel>;
 
     internal class DriveService : IService
     {
@@ -17,7 +17,7 @@ namespace AV00.Services
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 10;
         private readonly bool enableDebugLogging = false;
-        private Dictionary<EnumMotorCommands, MotorCommandData> activeOverrides = new();
+        private Dictionary<EnumMotorCommands, MotorCommandEventModel> activeOverrides = new();
         private Dictionary<EnumMotorCommands, CancellationTokenSource> cancellationSources = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
@@ -56,14 +56,14 @@ namespace AV00.Services
             try
             {
                 MotorEvent motorEvent = MotorEvent.Deserialize(WireMessage);
-                if (motorEvent.Data.Mode == EnumExecutionMode.Override)
+                if (motorEvent.Model.Mode == EnumExecutionMode.Override)
                 {
-                    Console.WriteLine($"DRIVER-SERVICE: [Warning] Cancelling Token for source: {motorEvent.Data.Command}");
-                    cancellationSources.TryGetValue(motorEvent.Data.Command, out CancellationTokenSource? source);
+                    Console.WriteLine($"DRIVER-SERVICE: [Warning] Cancelling Token for source: {motorEvent.Model.Command}");
+                    cancellationSources.TryGetValue(motorEvent.Model.Command, out CancellationTokenSource? source);
                     source?.Cancel();
-                    activeOverrides[motorEvent.Data.Command] = motorEvent.Data;
+                    activeOverrides[motorEvent.Model.Command] = motorEvent.Model;
                 }
-                motorController.MotorCommandQueues[motorEvent.Data.Command].Enqueue(motorEvent.Data);
+                motorController.MotorCommandQueues[motorEvent.Model.Command].Enqueue(motorEvent.Model);
             }
             catch (Exception e)
             {
@@ -100,7 +100,7 @@ namespace AV00.Services
         }
 
         // This task has sole authority to create new cancellation sources.
-        private async Task ProcessQueue(Queue<MotorCommandData> MotorCommandQueue, EnumMotorCommands CommandQueueType)
+        private async Task ProcessQueue(Queue<MotorCommandEventModel> MotorCommandQueue, EnumMotorCommands CommandQueueType)
         {
             await Task.Run(() =>
                 {
@@ -108,10 +108,10 @@ namespace AV00.Services
                     Console.WriteLine($"*DEBUG* QUEUE-RUNNER: [Info] Executing queue - {CommandQueueType}[{NumberPendingOfMotorEvents}]");
                     for (int motorEventIndex = 0; motorEventIndex < NumberPendingOfMotorEvents; motorEventIndex++)
                     {
-                        MotorCommandData currentCommand = MotorCommandQueue.Dequeue();
+                        MotorCommandEventModel currentCommand = MotorCommandQueue.Dequeue();
                         if (cancellationSources[CommandQueueType].Token.IsCancellationRequested)
                         {
-                            if (currentCommand.CommandId != activeOverrides[CommandQueueType].CommandId)
+                            if (currentCommand.Id != activeOverrides[CommandQueueType].Id)
                             {
                                 IssueCommandReceipt(currentCommand, EnumEventProcessingState.Rejected, "Command cancelled prior to execution");
                                 continue;
@@ -126,7 +126,7 @@ namespace AV00.Services
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {currentCommand.CommandId} - {e.Message}");
+                            Console.WriteLine($"DRIVER-SERVICE: [Error] Failed to run MotorEvent {currentCommand.Id} - {e.Message}");
                             IssueCommandReceipt(currentCommand, EnumEventProcessingState.Cancelled, "Command cancelled in progress");
                         }
                     }
@@ -134,10 +134,10 @@ namespace AV00.Services
             );
         }
 
-        private void IssueCommandReceipt(MotorCommandData CommandData, EnumEventProcessingState ExecutionState, string ReasonForExecutionState)
+        private void IssueCommandReceipt(MotorCommandEventModel CommandData, EnumEventProcessingState ExecutionState, string ReasonForExecutionState)
         {
-            Event<MotorCommandData> @event = new(ServiceName, CommandData.CommandId, EnumEventType.Event);
-            Console.WriteLine($"DRIVER-SERVICE: [Issuing] EventReceipt <{ExecutionState}> for MotorEvent {CommandData.CommandId}");
+            Event<MotorCommandEventModel> @event = new(CommandData);
+            Console.WriteLine($"DRIVER-SERVICE: [Issuing] EventReceipt <{ExecutionState}> for MotorEvent {CommandData.Id}");
             taskExecutorClient.PublishReceipt(@event.GenerateReceipt(ExecutionState, ReasonForExecutionState));
         }
     }
