@@ -9,6 +9,7 @@ using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
 using AV00.Communication;
 using AV00_Shared.FlowControl;
+using Transport.Client;
 
 namespace AV00
 {
@@ -64,8 +65,8 @@ namespace AV00
             Thread driveServiceThread = new(driveServiceThreadDelegate);
             ServiceRegistry.AddService(driveService);
 
-            ServiceBusClient serviceBusClient = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
-            serviceBusClient.RegisterServiceEventCallback("DriveService", TestCallback);
+            TransportClient transportClient = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            transportClient.RegisterServiceEventCallback("DriveService", TestCallback);
             Console.WriteLine($"Starting Transport Relay");
             transportRelayThread.Start();
             driveServiceThread.Start();
@@ -73,29 +74,29 @@ namespace AV00
             MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
-            serviceBusClient.PushTask(@event);
+            transportClient.PushEvent(@event);
 
             eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
-            serviceBusClient.PushTask(@event);
+            transportClient.PushEvent(@event);
 
             eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
-            serviceBusClient.PushTask(@event);
+            transportClient.PushEvent(@event);
 
             Thread.Sleep(6000);
 
             eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
-            serviceBusClient.PushTask(@event);
+            transportClient.PushEvent(@event);
 
             var i = 0;
             while(!Console.KeyAvailable)
             {
-                serviceBusClient.ProcessPendingEvents();
+                transportClient.ProcessPendingEvents();
                 Thread.Sleep(500);
 
                 var previousCursorY = Console.GetCursorPosition().Top;
