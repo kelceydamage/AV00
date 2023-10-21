@@ -1,17 +1,11 @@
 ﻿using AV00.Drivers.IO;
+using System.Collections.Immutable;
 using System.Device.I2c;
 
 namespace AV00.Drivers.ExpansionBoards
 {
     internal class DFR0604 : IPwmGenerator
     {
-        private enum EnumAnalogChannels : byte
-        {
-            A0 = 0x00,
-            A1 = 0x01,
-            A2 = 0x02,
-            A3 = 0x03
-        };
         public enum EnumBoardStatus : byte
         {
             StatusOk = 0x00,
@@ -22,20 +16,9 @@ namespace AV00.Drivers.ExpansionBoards
             StatusErrorUnableToRead = 0x05,
             StatusErrorUnableToWrite = 0x06,
         }
-        public enum EnumPwmChannelRegisters : byte
-        {
-            Pwm1 = 0x06,
-            Pwm2 = 0x08,
-            Pwm3 = 0x0a,
-            Pwm4 = 0x0c
-        };
-        public enum EnumAdcChannelRegisters : byte
-        {
-            Adc1 = 0x0f,
-            Adc2 = 0x11,
-            Adc3 = 0x13,
-            Adc4 = 0x15
-        };
+        private readonly static ImmutableArray<byte> pwmChannelRegisters = ImmutableArray.Create<byte>(0x06, 0x08, 0x0a, 0x0c);
+        private readonly static ImmutableArray<byte> analogChannelsRegisters = ImmutableArray.Create<byte>(0x00, 0x01, 0x02, 0x03);
+        private readonly static ImmutableArray<byte> adcChannelRegisters = ImmutableArray.Create<byte>(0x0f, 0x11, 0x13, 0x15);
         public const byte AdcChannelCount = 4;
         private const byte secondaryAddressRegister = 0x00;
         private const byte pidRegister = 0x01;
@@ -75,7 +58,7 @@ namespace AV00.Drivers.ExpansionBoards
         public int PwmChannelCount { get => pwmChannelCount; }
         private const int pwmChannelCount = 4;
         public float PwmMaxValue { get => pwmMaxValue; }
-        private const int pwmMaxValue = 100;
+        private const int pwmMaxValue = 1000;
 
         public DFR0604(byte I2cBus, int ChannelCount = 4)
         {
@@ -119,7 +102,7 @@ namespace AV00.Drivers.ExpansionBoards
                 else
                 {
                     SetPwmDisable();
-                    SetChannelPwmAll((byte[])Enum.GetValues(typeof(EnumPwmChannelRegisters)), 0);
+                    SetChannelPwmAll(0);
                     SetAdcDisable();
                 }
             }
@@ -222,31 +205,31 @@ namespace AV00.Drivers.ExpansionBoards
             }
         }
 
-        // NOTE: PwmAmount is a percentage for this hardware device
-        public void SetChannelPwm(int channelId, ushort PwmAmount)
+        // NOTE: PwmAmount is a percentage for this hardware device. Adjusted to support granularity of 1000.
+        public void SetChannelPwm(int channelId, float PwmAmountPercent)
         {
             ValidateChannelId(channelId);
-            byte pwmAmount = (byte)PwmAmount;
-            if (PwmAmount < 0 || PwmAmount > 100)
+            if (PwmAmountPercent < 0 || PwmAmountPercent > 100.0f)
             {
                 lastOperationStatus = EnumBoardStatus.StatusErrorParameter;
-                Console.WriteLine($"PwmAmount is a percentage for this hardware device, please set to between 0 - 100. Attempted Value: {PwmAmount}");
+                ErrorMessage = $"Please set PwmAmountPercent to between 0 - 100. Attempted Value: {PwmAmountPercent}";
             }
             else
             {
+                float pwmAmount = pwmMaxValue / 100 * PwmAmountPercent;
                 byte[] buffer = new byte[2];
-                buffer[0] = pwmAmount;
-                buffer[1] = (byte)(pwmAmount * 10 % 10);
-                WriteBytes((byte)channelId, buffer);
+                buffer[0] = (byte)Math.Floor(pwmAmount / 10);
+                buffer[1] = (byte)(pwmAmount % 10);
+                WriteBytes(pwmChannelRegisters[channelId], buffer);
             }
         }
 
-        public void SetChannelPwmAll(byte[] channelId, byte Duty)
+        public void SetChannelPwmAll(float PwmAmountPercent)
         {
             Console.WriteLine("Setting PWM Duty Cycle From List");
-            foreach (byte id in channelId)
+            for(var i = 0; i < pwmChannelRegisters.Length; i++) 
             {
-                SetChannelPwm(id, Duty);
+                SetChannelPwm(i, PwmAmountPercent);
             }
         }
 
@@ -263,7 +246,7 @@ namespace AV00.Drivers.ExpansionBoards
             buffer[0] = disableByte;
             WriteBytes(adcControlRegister, buffer);
         }
-
+         
         public int GetAdcValue(byte channelId)
         {
             byte[] buffer = new byte[2];

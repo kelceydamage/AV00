@@ -73,7 +73,7 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 200);
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
@@ -83,7 +83,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 200);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);

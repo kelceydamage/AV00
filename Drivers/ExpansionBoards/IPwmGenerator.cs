@@ -9,6 +9,6 @@
         public float PwmMaxValue { get; }
         public void SetFrequency(int Frequency);
         public void Reset();
-        public void SetChannelPwm(int ChannelId, ushort PwmAmount);
+        public void SetChannelPwm(int ChannelId, float PwmAmountPercent);
     }
 }

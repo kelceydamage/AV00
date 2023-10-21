@@ -214,22 +214,30 @@ namespace AV00.Drivers.ExpansionBoards
         }
 
         // PWM amounts 0 - 4096, 0 full off, 4096 full on
-        public void SetChannelPwm(int ChannelId, ushort PwmAmount)
+        public void SetChannelPwm(int ChannelId, float PwmAmountPercent)
         {
             ValidateChannelId(ChannelId);
-
-            byte[] setPwmBuffer = new byte[4]
+            if (PwmAmountPercent < 0 || PwmAmountPercent > 100.0f)
             {
-                (byte)(led0RegisterOnLow + 4 * ChannelId),
-                (byte)(led0RegisterOnHigh + 4 * ChannelId),
-                (byte)(led0RegisterOffLow + 4 * ChannelId),
-                (byte)(led0RegisterOffHigh + 4 * ChannelId),
-            };
-            //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
-            i2c.WriteBytes(setPwmBuffer[0], new byte[] { 0x00 & 0xff });
-            i2c.WriteBytes(setPwmBuffer[1], new byte[] { 0x00 >> 8 });
-            i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(PwmAmount & 0xff) });
-            i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(PwmAmount >> 8) });
+                lastOperationStatus = EnumBoardStatus.StatusErrorParameter;
+                //ErrorMessage = $"Please set PwmAmountPercent to between 0 - 100. Attempted Value: {PwmAmountPercent}";
+            }
+            else
+            {
+                ushort pwmAmount = Convert.ToUInt16(Math.Floor(PwmAmountPercent / 100 * PwmMaxValue));
+                byte[] setPwmBuffer = new byte[4]
+                {
+                    (byte)(led0RegisterOnLow + 4 * ChannelId),
+                    (byte)(led0RegisterOnHigh + 4 * ChannelId),
+                    (byte)(led0RegisterOffLow + 4 * ChannelId),
+                    (byte)(led0RegisterOffHigh + 4 * ChannelId),
+                };
+                //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
+                i2c.WriteBytes(setPwmBuffer[0], new byte[] { 0x00 & 0xff });
+                i2c.WriteBytes(setPwmBuffer[1], new byte[] { 0x00 >> 8 });
+                i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(pwmAmount & 0xff) });
+                i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(pwmAmount >> 8) });
+            }
 
             /*
             GetPhaseCycle(ChannelId, PwmAmount, out ushort phaseBegin, out ushort phaseEnd);
