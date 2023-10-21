@@ -32,7 +32,7 @@ namespace AV00
         // Device may be missing/broken on board
         // private static readonly byte AK8963Address = 0x0C;
         // private static readonly byte BMP280 = 0x77;
-        private static readonly int pwmFrequency = 1000;
+        private static readonly int pwmFrequency = 20000;
         private static readonly int GpioControllerId = 1;
 
         private static bool TestCallback(NetMQMessage MQMessage)
@@ -51,7 +51,9 @@ namespace AV00
             ThreadStart transportRelayThreadDelegate = new(transportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
 
-            PWM pwmDriver = new(new PCA9685(boardBusId));
+            DFR0604 DFR0604 = new DFR0604(boardBusId);
+            DFR0604.Init();
+            PWM pwmDriver = new(DFR0604);
             pwmDriver.SetPwmFrequency(pwmFrequency);
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
@@ -71,7 +73,7 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 200);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
@@ -81,7 +83,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 200);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
