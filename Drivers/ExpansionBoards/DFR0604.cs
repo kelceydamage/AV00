@@ -54,7 +54,7 @@ namespace AV00.Drivers.ExpansionBoards
         private readonly int maxChannel;
         private readonly I2cChannel i2c;
         public string ErrorMessage = "";
-        private readonly byte address;
+        private byte address = i2cAddress;
 
         public byte BusId { get => busId; }
         private readonly byte busId;
