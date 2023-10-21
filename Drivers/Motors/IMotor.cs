@@ -7,7 +7,7 @@ namespace AV00.Drivers.Motors
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public PinValue CurrentDirection { get; set; }
-        public ushort CurrentPwmAmount { get; set; }
+        public float CurrentPwmAmount { get; set; }
         public float DutyCycleChangeStepPct { get; }
         public short DutyCycleChangeIntervalMs { get; }
         public string Type { get; }

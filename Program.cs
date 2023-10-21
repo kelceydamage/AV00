@@ -58,8 +58,8 @@ namespace AV00
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A39012(127, 9, "TurningMotor"),  
-                new MDD10A55072(112, 8, "DriveMotor")
+                new MDD10A39012(127, 1, "TurningMotor"),
+                new MDD10A55072(112, 0, "DriveMotor")
             );
 
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
@@ -73,24 +73,24 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60);
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60f);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0f, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60f);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
 
             Thread.Sleep(6000);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0f, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);

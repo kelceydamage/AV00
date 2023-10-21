@@ -101,6 +101,8 @@ namespace AV00.Drivers.ExpansionBoards
         public int PwmBitDepth { get { return 12; } }
         public int PwmChannelCount { get { return channelCount; } }
         public float PwmMaxValue { get { return referenceClockDivider - 1; } }
+        public float PwmMaxPercent { get => pwmMaxPercent; }
+        private const int pwmMaxPercent = 100;
 
         public PCA9685(int I2cBus, int ChannelCount = 16)
         {

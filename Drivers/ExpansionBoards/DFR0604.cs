@@ -59,6 +59,8 @@ namespace AV00.Drivers.ExpansionBoards
         private const int pwmChannelCount = 4;
         public float PwmMaxValue { get => pwmMaxValue; }
         private const int pwmMaxValue = 1000;
+        public float PwmMaxPercent { get => pwmMaxPercent; }
+        private const int pwmMaxPercent = 100;
 
         public DFR0604(byte I2cBus, int ChannelCount = 4)
         {

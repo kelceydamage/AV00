@@ -6,6 +6,7 @@ namespace AV00.Drivers.IO
     {
         private readonly IPwmGenerator pwmGenerator;
         private readonly float maxPwmValue = 100.0f;
+        public float PwmMaxPercent { get => pwmGenerator.PwmMaxPercent; }
         public float PwmMaxValue { get => pwmGenerator.PwmMaxValue; }
 
         public PWM(IPwmGenerator PwmGenerator)
