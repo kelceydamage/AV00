@@ -17,7 +17,6 @@ namespace AV00.Controllers.MotorController
         public EnumExecutionMode Mode { get => mode; }
         private readonly EnumExecutionMode mode;
 
-        [JsonConstructor]
         public MotorCommandEventModel(
             string ServiceName,
             EnumMotorCommands Command,
@@ -26,6 +25,23 @@ namespace AV00.Controllers.MotorController
             EnumExecutionMode Mode = EnumExecutionMode.Blocking,
             Guid? Id = null,
             string? TimeStamp = null
+        ) : base(ServiceName, Id, TimeStamp)
+        {
+            command = Command;
+            direction = Direction;
+            pwmAmount = PwmAmount;
+            mode = Mode;
+        }
+
+        [JsonConstructor]
+        public MotorCommandEventModel(
+            string ServiceName,
+            EnumMotorCommands Command,
+            PinValue Direction,
+            ushort PwmAmount,
+            EnumExecutionMode Mode,
+            Guid Id,
+            string TimeStamp
         ) : base(ServiceName, Id, TimeStamp)
         {
             command = Command;
