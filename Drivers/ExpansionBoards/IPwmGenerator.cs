@@ -7,7 +7,7 @@
         public int PwmBitDepth { get; }
         public int PwmChannelCount { get; }
         public float PwmMaxValue { get; }
-        public void SetFrequency(float Frequency);
+        public void SetFrequency(int Frequency);
         public void Reset();
         public void SetChannelPwm(int ChannelId, ushort PwmAmount);
     }

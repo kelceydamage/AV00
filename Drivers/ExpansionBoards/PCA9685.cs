@@ -82,6 +82,19 @@ namespace AV00.Drivers.ExpansionBoards
         {
             get { return pwmWriteChannels; }
         }
+        public enum EnumBoardStatus : byte
+        {
+            StatusOk = 0x00,
+            StatusError = 0x01,
+            StatusErrorDeviceNotDetected = 0x02,
+            StatusErrorSoftwareVersion = 0x03,
+            StatusErrorParameter = 0x04,
+            StatusErrorUnableToRead = 0x05,
+            StatusErrorUnableToWrite = 0x06,
+        }
+        // TODO: Implement for future and update IPwmGenerator interface.
+        public EnumBoardStatus LastOperationStatus { get => lastOperationStatus; }
+        private EnumBoardStatus lastOperationStatus = EnumBoardStatus.StatusOk;
         public string Name { get { return "PCA9685"; } set { } }
         public int PwmMaxFrequencyHz { get { return 1526; } }
         public int PwmMinFrequencyHz { get { return 24; } }
@@ -131,7 +144,7 @@ namespace AV00.Drivers.ExpansionBoards
         // diminishes, as raw pre-scaler value, computed per datasheet, starts to require
         // much larger frequency increases for single-digit increases of the raw pre-scaler
         // value that ultimately controls the PWM frequency produced.
-        public void SetFrequency(float Frequency) // Hz
+        public void SetFrequency(int Frequency) // Hz
         {
             int prescalerValue = (int)(referenceClockSpeed / referenceClockDivider / Frequency) - 1;
             Console.WriteLine($"Setting Frequency: {Frequency}, Prescaler: {prescalerValue}");

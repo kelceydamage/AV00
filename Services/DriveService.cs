@@ -17,8 +17,8 @@ namespace AV00.Services
         private readonly IMotorController motorController;
         private readonly int updateFrequency = 10;
         private readonly bool enableDebugLogging = false;
-        private Dictionary<EnumMotorCommands, MotorCommandEventModel> activeOverrides = new();
-        private Dictionary<EnumMotorCommands, CancellationTokenSource> cancellationSources = new();
+        private readonly Dictionary<EnumMotorCommands, MotorCommandEventModel> activeOverrides = new();
+        private readonly Dictionary<EnumMotorCommands, CancellationTokenSource> cancellationSources = new();
 
         public DriveService(IMotorController MotorController, ConnectionStringSettingsCollection Connections, NameValueCollection Settings)
         {
