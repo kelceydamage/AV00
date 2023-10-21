@@ -47,7 +47,7 @@ namespace AV00
             DeviceRegistryService deviceRegistry = new();
             ServiceRegistry.AddService(deviceRegistry);
 
-            ServiceBusRelay transportRelay = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
+            TransportRelay transportRelay = new(ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
             ThreadStart transportRelayThreadDelegate = new(transportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
 

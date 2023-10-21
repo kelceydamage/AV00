@@ -9,53 +9,53 @@ namespace AV00.Communication
 {
     public class ServiceBusClient : BaseTransportClient
     {
-        private readonly PushClient ServiceBusProducer;
+        private readonly PushClient transportRelayClient;
 
         public ServiceBusClient(string ServiceBusClientSocket, string ReceiptEventSocket, short FrameCount) : base(
             new SubscriberClient($"{ReceiptEventSocket}"),
             FrameCount
         )
         {
-            ServiceBusProducer = new PushClient(ServiceBusClientSocket);
+            transportRelayClient = new PushClient(ServiceBusClientSocket);
         }
 
         public ServiceBusClient(ConnectionStringSettingsCollection Connections, NameValueCollection Settings) : base(
-            new SubscriberClient($"{Connections["ReceiptEventSocket"].ConnectionString}"),
+            new SubscriberClient($"{Connections["EventReceiptSocket"].ConnectionString}"),
             short.Parse(Settings["TransportMessageFrameCount"] ?? throw new Exception())
         )
         {
-            ServiceBusProducer = new PushClient(Connections["ServiceBusClientSocket"].ConnectionString);
+            transportRelayClient = new PushClient(Connections["TransportRelayClientSocket"].ConnectionString);
         }
 
         public void PushTask<T>(Event<T> Task)
         {
-            ServiceBusProducer.SendMQMessage(Task.Serialize());
+            transportRelayClient.SendMQMessage(Task.Serialize());
         }
     }
 
     public class TaskExecutorClient : BaseTransportClient
     {
-        private readonly PushClient ServiceBusProducer;
+        private readonly PushClient transportRelayClient;
 
         public TaskExecutorClient(string TaskEventSocket, string ServiceBusClientSocket, short FrameCount) : base(
             new SubscriberClient($">{TaskEventSocket}"),
             FrameCount
         )
         {
-            ServiceBusProducer = new($">{ServiceBusClientSocket}");
+            transportRelayClient = new($">{ServiceBusClientSocket}");
         }
 
         public TaskExecutorClient(ConnectionStringSettingsCollection Connections, NameValueCollection Settings) : base(
-            new SubscriberClient($">{Connections["TaskEventSocket"].ConnectionString}"),
+            new SubscriberClient($">{Connections["EventSocket"].ConnectionString}"),
             short.Parse(Settings["TransportMessageFrameCount"] ?? throw new Exception())
         )
         {
-            ServiceBusProducer = new($">{Connections["ServiceBusClientSocket"].ConnectionString}");
+            transportRelayClient = new($">{Connections["TransportRelayClientSocket"].ConnectionString}");
         }
 
         public void PublishReceipt(Event<TaskExecutionEventModel> Receipt)
         {
-            ServiceBusProducer.SendMQMessage(Receipt.Serialize());
+            transportRelayClient.SendMQMessage(Receipt.Serialize());
         }
     }
 }
