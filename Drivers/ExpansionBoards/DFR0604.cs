@@ -222,6 +222,7 @@ namespace AV00.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)Math.Floor(pwmAmount / 10);
                 buffer[1] = (byte)(pwmAmount % 10);
+                Console.WriteLine($"PwmAmount: {pwmAmount}, buffer: [{(byte)Math.Floor(pwmAmount / 10)}, {(byte)(pwmAmount % 10)}], channel: {pwmChannelRegisters[channelId]}");
                 WriteBytes(pwmChannelRegisters[channelId], buffer);
             }
         }
