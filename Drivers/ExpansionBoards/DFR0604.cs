@@ -4,18 +4,18 @@ using System.Device.I2c;
 
 namespace AV00.Drivers.ExpansionBoards
 {
-    internal class DFR0604 : IPwmGenerator
+    public enum EnumBoardStatus : byte
     {
-        public enum EnumBoardStatus : byte
-        {
-            StatusOk = 0x00,
-            StatusError = 0x01,
-            StatusErrorDeviceNotDetected = 0x02,
-            StatusErrorSoftwareVersion = 0x03,
-            StatusErrorParameter = 0x04,
-            StatusErrorUnableToRead = 0x05,
-            StatusErrorUnableToWrite = 0x06,
-        }
+        StatusOk = 0x00,
+        StatusError = 0x01,
+        StatusErrorDeviceNotDetected = 0x02,
+        StatusErrorSoftwareVersion = 0x03,
+        StatusErrorParameter = 0x04,
+        StatusErrorUnableToRead = 0x05,
+        StatusErrorUnableToWrite = 0x06,
+    }
+    public class DFR0604 : IPwmGenerator
+    {
         private readonly static ImmutableArray<byte> pwmChannelRegisters = ImmutableArray.Create<byte>(0x06, 0x08, 0x0a, 0x0c);
         private readonly static ImmutableArray<byte> analogChannelsRegisters = ImmutableArray.Create<byte>(0x00, 0x01, 0x02, 0x03);
         private readonly static ImmutableArray<byte> adcChannelRegisters = ImmutableArray.Create<byte>(0x0f, 0x11, 0x13, 0x15);
