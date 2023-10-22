@@ -75,7 +75,7 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60f);
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
@@ -85,7 +85,7 @@ namespace AV00
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
             Console.WriteLine($"STATUS2: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 60f);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);

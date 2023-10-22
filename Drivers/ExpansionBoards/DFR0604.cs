@@ -274,3 +274,5 @@ namespace AV00.Drivers.ExpansionBoards
         }
     }
 }
+
+// Board is working with python. I'll have to use the python script to print out the serial values. seems like this doesn't break anything, but it also doesn't get a response from the motors.
