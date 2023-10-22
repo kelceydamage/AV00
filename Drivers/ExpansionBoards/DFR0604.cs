@@ -73,6 +73,7 @@ namespace AV00.Drivers.ExpansionBoards
             }
             channelCount = ChannelCount;
             maxChannel = channelCount - 1;
+            SetPwmEnable();
         }
 
         public void Reset()
