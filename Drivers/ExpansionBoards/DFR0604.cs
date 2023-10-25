@@ -153,7 +153,6 @@ namespace AV00.Drivers.ExpansionBoards
         {
             byte[] buffer = new byte[1];
             buffer[0] = enableByte;
-            Console.WriteLine($"[WRITE] set_pwm_enable: {pwmControlRegister}, [{buffer[0]}]");
             WriteBytes(pwmControlRegister, buffer);
             if (lastOperationStatus == EnumBoardStatus.StatusOk)
             {
@@ -175,7 +174,6 @@ namespace AV00.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)(frequency >> 8);
                 buffer[1] = (byte)(frequency & 0xff);
-                Console.WriteLine($"[WRITE] set_pwm_frequency: {pwmFrequencyRegister}, [{buffer[0]}, {buffer[1]}]");
                 WriteBytes(pwmFrequencyRegister, buffer);
                 Thread.Sleep(10);
                 if (pwmPreviousFlag)
@@ -184,7 +182,6 @@ namespace AV00.Drivers.ExpansionBoards
                 }
                 currentFrequency = frequency;
             }
-            Console.WriteLine($"[SetFrequency] isPwmEnabled: {isPwmEnabled}");
         }
 
         private void ValidateChannelId(int ChannelId)
@@ -199,7 +196,6 @@ namespace AV00.Drivers.ExpansionBoards
         public void SetChannelPwm(int channelId, float PwmAmountPercent)
         {
             ValidateChannelId(channelId);
-            Console.WriteLine($"[SetChannelPwm] isPwmEnabled: {isPwmEnabled}");
             if (PwmAmountPercent < 0 || PwmAmountPercent > 100.0f)
             {
                 lastOperationStatus = EnumBoardStatus.StatusErrorParameter;
@@ -211,7 +207,6 @@ namespace AV00.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)Math.Floor(pwmAmount / 10);
                 buffer[1] = (byte)(pwmAmount % 10);
-                Console.WriteLine($"[WRITE] set_pwm_duty: {pwmChannelRegisters[channelId]}, [{buffer[0]}, {buffer[1]}]");
                 WriteBytes(pwmChannelRegisters[channelId], buffer);
             }
         }
@@ -262,5 +257,3 @@ namespace AV00.Drivers.ExpansionBoards
         }
     }
 }
-
-// Board is working with python. I'll have to use the python script to print out the serial values. seems like this doesn't break anything, but it also doesn't get a response from the motors.

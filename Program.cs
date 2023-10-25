@@ -32,7 +32,7 @@ namespace AV00
         // Device may be missing/broken on board
         // private static readonly byte AK8963Address = 0x0C;
         // private static readonly byte BMP280 = 0x77;
-        private static readonly int pwmFrequency = 1000;
+        private static readonly int pwmFrequency = 20000;  // DFR0604 is capable of up to 48000hz frequency.
         private static readonly int GpioControllerId = 1;
 
         private static bool TestCallback(NetMQMessage MQMessage)
