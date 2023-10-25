@@ -73,7 +73,9 @@ namespace AV00.Drivers.ExpansionBoards
             }
             channelCount = ChannelCount;
             maxChannel = channelCount - 1;
+            Console.WriteLine($"[DFR0604] isPwmEnabled: {isPwmEnabled}");
             SetPwmEnable();
+            Console.WriteLine($"[DFR0604] isPwmEnabled: {isPwmEnabled}");
         }
 
         public void Reset()
