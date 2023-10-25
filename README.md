@@ -42,14 +42,14 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 
 ## TODO - Infra (Code Management)
 * [ ] Setup a CI/CD pipeline.
-* [ ] Dockerize the application to run in NV containers.
+* [x] Dockerize the application to run in NV containers.
 
 ## TODO - Hardware (Physical Robot)
 * [ ] Add an ultrasonic sensor to the robot.
 * [ ] Add a gyro sensor to the robot.
 * [ ] Run some updated battery driven tests.
 
-## TODO - Other
+## TODO - Other 
 * [ ] Update documentation.
 * [ ] Update design docs.
 * [ ] Update spec sheets.

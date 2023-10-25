@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AV00": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
