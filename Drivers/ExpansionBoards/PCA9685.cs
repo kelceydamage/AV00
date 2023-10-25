@@ -82,12 +82,18 @@ namespace AV00.Drivers.ExpansionBoards
         {
             get { return pwmWriteChannels; }
         }
+
+        // TODO: Implement for future and update IPwmGenerator interface.
+        public EnumBoardStatus LastOperationStatus { get => lastOperationStatus; }
+        private EnumBoardStatus lastOperationStatus = EnumBoardStatus.StatusOk;
         public string Name { get { return "PCA9685"; } set { } }
         public int PwmMaxFrequencyHz { get { return 1526; } }
         public int PwmMinFrequencyHz { get { return 24; } }
         public int PwmBitDepth { get { return 12; } }
         public int PwmChannelCount { get { return channelCount; } }
         public float PwmMaxValue { get { return referenceClockDivider - 1; } }
+        public float PwmMaxPercent { get => pwmMaxPercent; }
+        private const int pwmMaxPercent = 100;
 
         public PCA9685(int I2cBus, int ChannelCount = 16)
         {
@@ -106,13 +112,13 @@ namespace AV00.Drivers.ExpansionBoards
                 pwmWriteChannels[i] = (byte)(led0RegisterOnLow + i * 0x04);
                 pwmReadChannels[i] = (byte)(led0RegisterOnLow + (i << 2));
             }
-            Reset();
         }
 
-        public void Reset()
+        public EnumBoardStatus Init()
         {
             i2c.WriteBytes(mode1Register, new byte[] { softwareReset });
             Thread.Sleep(1);
+            return lastOperationStatus;
         }
 
         // The overall PWM frequency in Hertz.
@@ -131,7 +137,7 @@ namespace AV00.Drivers.ExpansionBoards
         // diminishes, as raw pre-scaler value, computed per datasheet, starts to require
         // much larger frequency increases for single-digit increases of the raw pre-scaler
         // value that ultimately controls the PWM frequency produced.
-        public void SetFrequency(float Frequency) // Hz
+        public void SetFrequency(int Frequency) // Hz
         {
             int prescalerValue = (int)(referenceClockSpeed / referenceClockDivider / Frequency) - 1;
             Console.WriteLine($"Setting Frequency: {Frequency}, Prescaler: {prescalerValue}");
@@ -201,22 +207,30 @@ namespace AV00.Drivers.ExpansionBoards
         }
 
         // PWM amounts 0 - 4096, 0 full off, 4096 full on
-        public void SetChannelPwm(int ChannelId, ushort PwmAmount)
+        public void SetChannelPwm(int ChannelId, float PwmAmountPercent)
         {
             ValidateChannelId(ChannelId);
-
-            byte[] setPwmBuffer = new byte[4]
+            if (PwmAmountPercent < 0 || PwmAmountPercent > 100.0f)
             {
-                (byte)(led0RegisterOnLow + 4 * ChannelId),
-                (byte)(led0RegisterOnHigh + 4 * ChannelId),
-                (byte)(led0RegisterOffLow + 4 * ChannelId),
-                (byte)(led0RegisterOffHigh + 4 * ChannelId),
-            };
-            //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
-            i2c.WriteBytes(setPwmBuffer[0], new byte[] { 0x00 & 0xff });
-            i2c.WriteBytes(setPwmBuffer[1], new byte[] { 0x00 >> 8 });
-            i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(PwmAmount & 0xff) });
-            i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(PwmAmount >> 8) });
+                lastOperationStatus = EnumBoardStatus.StatusErrorParameter;
+                //ErrorMessage = $"Please set PwmAmountPercent to between 0 - 100. Attempted Value: {PwmAmountPercent}";
+            }
+            else
+            {
+                ushort pwmAmount = Convert.ToUInt16(Math.Floor(PwmAmountPercent / 100 * PwmMaxValue));
+                byte[] setPwmBuffer = new byte[4]
+                {
+                    (byte)(led0RegisterOnLow + 4 * ChannelId),
+                    (byte)(led0RegisterOnHigh + 4 * ChannelId),
+                    (byte)(led0RegisterOffLow + 4 * ChannelId),
+                    (byte)(led0RegisterOffHigh + 4 * ChannelId),
+                };
+                //Console.WriteLine($"Channel Registers: {setPwmBuffer[0]}, {setPwmBuffer[1]}, {setPwmBuffer[2]}, {setPwmBuffer[3]}");
+                i2c.WriteBytes(setPwmBuffer[0], new byte[] { 0x00 & 0xff });
+                i2c.WriteBytes(setPwmBuffer[1], new byte[] { 0x00 >> 8 });
+                i2c.WriteBytes(setPwmBuffer[2], new byte[] { (byte)(pwmAmount & 0xff) });
+                i2c.WriteBytes(setPwmBuffer[3], new byte[] { (byte)(pwmAmount >> 8) });
+            }
 
             /*
             GetPhaseCycle(ChannelId, PwmAmount, out ushort phaseBegin, out ushort phaseEnd);

@@ -56,6 +56,7 @@ namespace AV00.Controllers.MotorController
             motorRegistry.Add(EnumMotorCommands.Move, driveMotor);
             motorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
             InitializeCommandQueues();
+            servoBoardController.Init();
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.
@@ -150,18 +151,18 @@ namespace AV00.Controllers.MotorController
         // between motor commands, and a quicker response time
         private void Decelerate(IMotor Motor, MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
-            ushort targetPwm = MotorRequest.PwmAmount;
+            float targetPwm = MotorRequest.PwmAmount;
             if (targetPwm >= Motor.CurrentPwmAmount) { return; }
-            ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
+            float stopAmount = (float)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxPercent);
             if (targetPwm < stopAmount) { targetPwm = stopAmount; }
-            ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
+            float pwmChangeAmount = (float)Math.Floor(servoBoardController.PwmMaxPercent * Motor.DutyCycleChangeStepPct);
             Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Decelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount > targetPwm)
             {
                 Token.ThrowIfCancellationRequested();
                 Motor.CurrentPwmAmount -= pwmChangeAmount;
                 if (Motor.CurrentPwmAmount < targetPwm) { Motor.CurrentPwmAmount = targetPwm; }
-                if (Motor.CurrentPwmAmount == stopAmount) { Motor.CurrentPwmAmount = 0; };
+                if (Motor.CurrentPwmAmount == stopAmount) { Motor.CurrentPwmAmount = 0f; };
                 SetDutyAndDirection(Motor);
                 Thread.Sleep(Motor.DutyCycleChangeIntervalMs);
             }
@@ -171,13 +172,13 @@ namespace AV00.Controllers.MotorController
         // between motor commands, and a quicker response time
         private void Accelerate(IMotor Motor, MotorCommandEventModel MotorRequest, CancellationToken Token)
         {
-            ushort targetPwm = MotorRequest.PwmAmount;
-            ushort stopAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxValue);
+            float targetPwm = MotorRequest.PwmAmount;
+            float stopAmount = (float)Math.Floor(Motor.PwmSoftCaps.StopPwm * servoBoardController.PwmMaxPercent);
             if (Motor.CurrentPwmAmount < stopAmount) { Motor.CurrentPwmAmount = stopAmount; }
             if (targetPwm <= Motor.CurrentPwmAmount) { return; }
-            ushort runAmount = (ushort)Math.Floor(Motor.PwmSoftCaps.RunPwm * servoBoardController.PwmMaxValue);
+            float runAmount = (float)Math.Floor(Motor.PwmSoftCaps.RunPwm * servoBoardController.PwmMaxPercent);
             if (targetPwm > runAmount) { targetPwm = runAmount; }
-            ushort pwmChangeAmount = (ushort)Math.Floor(servoBoardController.PwmMaxValue * Motor.DutyCycleChangeStepPct);
+            float pwmChangeAmount = (float)Math.Floor(servoBoardController.PwmMaxPercent * Motor.DutyCycleChangeStepPct);
             Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Accelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
             while (Motor.CurrentPwmAmount < targetPwm)
             {
@@ -191,7 +192,7 @@ namespace AV00.Controllers.MotorController
 
         private void HardStop(MotorCommandEventModel MotorRequest)
         {
-            motorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0;
+            motorRegistry[MotorRequest.Command].Motor.CurrentPwmAmount = 0f;
             SetDutyAndDirection(motorRegistry[MotorRequest.Command].Motor);
         }
     }

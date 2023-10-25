@@ -32,7 +32,7 @@ namespace AV00
         // Device may be missing/broken on board
         // private static readonly byte AK8963Address = 0x0C;
         // private static readonly byte BMP280 = 0x77;
-        private static readonly int pwmFrequency = 1000;
+        private static readonly int pwmFrequency = 20000;  // DFR0604 is capable of up to 48000hz frequency.
         private static readonly int GpioControllerId = 1;
 
         private static bool TestCallback(NetMQMessage MQMessage)
@@ -51,15 +51,19 @@ namespace AV00
             ThreadStart transportRelayThreadDelegate = new(transportRelay.ForwardMessages);
             Thread transportRelayThread = new(transportRelayThreadDelegate);
 
-            PWM pwmDriver = new(new PCA9685(boardBusId));
+            DFR0604 DFR0604 = new(boardBusId);
+            EnumBoardStatus status = DFR0604.Init();
+            Console.WriteLine($"STATUS: {status}, REASON: {DFR0604.ErrorMessage}");
+            PWM pwmDriver = new(DFR0604);
             pwmDriver.SetPwmFrequency(pwmFrequency);
+            Console.WriteLine($"STATUS: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A39012(127, 9, "TurningMotor"),  
-                new MDD10A55072(112, 8, "DriveMotor")
+                new MDD10A39012(127, 1, "TurningMotor"),
+                new MDD10A55072(112, 0, "DriveMotor")
             );
-
+            Console.WriteLine($"STATUS: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
             ThreadStart driveServiceThreadDelegate = new(driveService.Start);
             Thread driveServiceThread = new(driveServiceThreadDelegate);
@@ -71,28 +75,28 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
-            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
+            Console.WriteLine($"STATUS1: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0f, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 1024);
+            Console.WriteLine($"STATUS2: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-
+            Console.WriteLine($"STATUS3: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             Thread.Sleep(6000);
 
-            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0, EnumExecutionMode.Override);
+            eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 0f, EnumExecutionMode.Override);
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-
+            Console.WriteLine($"STATUS4: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             var i = 0;
             while(!Console.KeyAvailable)
             {
