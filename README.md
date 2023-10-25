@@ -24,6 +24,7 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 
 ## TODO - Shared Libraries
 [AV00 Shared](https://github.com/kelceydamage/AV00-Shared)
+* Debating moving all the hardware drivers into a separate repo as they might benefit other programers.
 
 ## TODO - Interservice Communication (Transport Layer)
 [AV00 Transport](https://github.com/kelceydamage/AV00-Transport)
@@ -47,7 +48,6 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 * [ ] Add an ultrasonic sensor to the robot.
 * [ ] Add a gyro sensor to the robot.
 * [ ] Run some updated battery driven tests.
-* [ ] Find a way to package the breadboard setup into the robot itself.
 
 ## TODO - Other
 * [ ] Update documentation.
