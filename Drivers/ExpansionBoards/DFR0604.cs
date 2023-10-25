@@ -168,6 +168,7 @@ namespace AV00.Drivers.ExpansionBoards
         {
             byte[] buffer = new byte[1];
             buffer[0] = enableByte;
+            Console.WriteLine($"[WRITE] set_pwm_enable: {pwmControlRegister}, [{buffer[0]}]");
             WriteBytes(pwmControlRegister, buffer);
             if (lastOperationStatus == EnumBoardStatus.StatusOk)
             {
@@ -189,7 +190,7 @@ namespace AV00.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)(frequency >> 8);
                 buffer[1] = (byte)(frequency & 0xff);
-                Console.WriteLine($"Setting PWM Frequencey buffer[0]: {buffer[0]}, buffer[1]: {buffer[1]}");
+                Console.WriteLine($"[WRITE] set_pwm_frequency: {pwmFrequencyRegister}, [{buffer[0]}, {buffer[1]}]");
                 WriteBytes(pwmFrequencyRegister, buffer);
                 Thread.Sleep(10);
                 if (pwmPreviousFlag)
@@ -223,7 +224,7 @@ namespace AV00.Drivers.ExpansionBoards
                 byte[] buffer = new byte[2];
                 buffer[0] = (byte)Math.Floor(pwmAmount / 10);
                 buffer[1] = (byte)(pwmAmount % 10);
-                Console.WriteLine($"PwmAmount: {pwmAmount}, buffer: [{(byte)Math.Floor(pwmAmount / 10)}, {(byte)(pwmAmount % 10)}], channel: {pwmChannelRegisters[channelId]}");
+                Console.WriteLine($"[WRITE] set_pwm_duty: {pwmChannelRegisters[channelId]}, [{buffer[0]}, {buffer[1]}]");
                 WriteBytes(pwmChannelRegisters[channelId], buffer);
             }
         }
