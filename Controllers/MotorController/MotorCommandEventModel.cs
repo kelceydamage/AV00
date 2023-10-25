@@ -10,8 +10,8 @@ namespace AV00.Controllers.MotorController
     {
         public PinValue Direction { get => direction; }
         private readonly PinValue direction;
-        public ushort PwmAmount { get => pwmAmount; }
-        private readonly ushort pwmAmount;
+        public float PwmAmount { get => pwmAmount; }
+        private readonly float pwmAmount;
         public EnumMotorCommands Command { get => command; }
         private readonly EnumMotorCommands command;
         public EnumExecutionMode Mode { get => mode; }
@@ -21,7 +21,7 @@ namespace AV00.Controllers.MotorController
             string ServiceName,
             EnumMotorCommands Command,
             PinValue Direction,
-            ushort PwmAmount,
+            float PwmAmount,
             EnumExecutionMode Mode = EnumExecutionMode.Blocking,
             Guid? Id = null,
             string? TimeStamp = null
@@ -38,7 +38,7 @@ namespace AV00.Controllers.MotorController
             string ServiceName,
             EnumMotorCommands Command,
             PinValue Direction,
-            ushort PwmAmount,
+            float PwmAmount,
             EnumExecutionMode Mode,
             Guid Id,
             string TimeStamp

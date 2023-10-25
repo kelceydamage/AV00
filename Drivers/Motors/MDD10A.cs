@@ -25,8 +25,8 @@ namespace AV00.Drivers.Motors
         public string Name { get; set; }
         public PinValue CurrentDirection { get => currentDirection; set => currentDirection = value; }
         private PinValue currentDirection = PinValue.Low;
-        public ushort CurrentPwmAmount { get => currentPwmAmount; set => currentPwmAmount = value; }
-        private ushort currentPwmAmount = 0;
+        public float CurrentPwmAmount { get => currentPwmAmount; set => currentPwmAmount = value; }
+        private float currentPwmAmount = 0f;
         public string Type { get; } = "550";
         public float Voltage { get; } = 7.2f;
         public int Rpm { get; } = 18200;
@@ -49,8 +49,8 @@ namespace AV00.Drivers.Motors
         public string Name { get; set; }
         public PinValue CurrentDirection { get => currentDirection; set => currentDirection = value; }
         private PinValue currentDirection = PinValue.Low;
-        public ushort CurrentPwmAmount { get => currentPwmAmount; set => currentPwmAmount = value; }
-        private ushort currentPwmAmount = 0;
+        public float CurrentPwmAmount { get => currentPwmAmount; set => currentPwmAmount = value; }
+        private float currentPwmAmount = 0f;
         public string Type { get; } = "390";
         public float Voltage { get; } = 12.0f;
         public int Rpm { get; } = 6300;

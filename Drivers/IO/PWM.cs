@@ -5,13 +5,14 @@ namespace AV00.Drivers.IO
     public class PWM
     {
         private readonly IPwmGenerator pwmGenerator;
-        private readonly ushort maxPwmValue;
+        private readonly float maxPwmValue = 100.0f;
+        public float PwmMaxPercent { get => pwmGenerator.PwmMaxPercent; }
         public float PwmMaxValue { get => pwmGenerator.PwmMaxValue; }
 
         public PWM(IPwmGenerator PwmGenerator)
         {
             pwmGenerator = PwmGenerator;
-            maxPwmValue = (ushort)(Math.Pow(2, pwmGenerator.PwmBitDepth) - 1);
+            //maxPwmValue = (ushort)(Math.Pow(2, pwmGenerator.PwmBitDepth) - 1);
         }
 
         public void SetPwmFrequency(int Frequency)
@@ -23,22 +24,26 @@ namespace AV00.Drivers.IO
             pwmGenerator.SetFrequency(Frequency);
         }
 
-        public void SetChannelPWM(int ChannelId, ushort PwmAmount)
+        public void SetChannelPWM(int ChannelId, float PwmAmountPercent)
         {
             if (ChannelId < 0 || ChannelId > pwmGenerator.PwmChannelCount)
             {
                 throw new ArgumentException($"ChannelId must be between 0 and {pwmGenerator.PwmChannelCount}");
             }
-            if (PwmAmount < 0 || PwmAmount > maxPwmValue)
+            if (PwmAmountPercent < 0 || PwmAmountPercent > maxPwmValue)
             {
                 throw new Exception($"PwmAmount must be between 0 and {maxPwmValue} for this {pwmGenerator.PwmBitDepth}-bit controller");
             }
-            pwmGenerator.SetChannelPwm(ChannelId, PwmAmount);
+            pwmGenerator.SetChannelPwm(ChannelId, PwmAmountPercent);
         }
 
-        public void Reset()
+        public void Init()
         {
-            pwmGenerator.Reset();
+            EnumBoardStatus status = pwmGenerator.Init();
+            if (status != EnumBoardStatus.StatusOk)
+            {
+                throw new Exception($"PWM Generator internal error: {status}");
+            }
         }
     }
 }
