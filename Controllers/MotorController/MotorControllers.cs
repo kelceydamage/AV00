@@ -56,6 +56,7 @@ namespace AV00.Controllers.MotorController
             motorRegistry.Add(EnumMotorCommands.Move, driveMotor);
             motorRegistry.Add(EnumMotorCommands.Turn, turningMotor);
             InitializeCommandQueues();
+            servoBoardController.Init();
         }
 
         // TODO: Stop is not implemented, might remove entirely as a command.

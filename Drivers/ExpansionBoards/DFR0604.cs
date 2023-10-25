@@ -4,16 +4,6 @@ using System.Device.I2c;
 
 namespace AV00.Drivers.ExpansionBoards
 {
-    public enum EnumBoardStatus : byte
-    {
-        StatusOk = 0x00,
-        StatusError = 0x01,
-        StatusErrorDeviceNotDetected = 0x02,
-        StatusErrorSoftwareVersion = 0x03,
-        StatusErrorParameter = 0x04,
-        StatusErrorUnableToRead = 0x05,
-        StatusErrorUnableToWrite = 0x06,
-    }
     public class DFR0604 : IPwmGenerator
     {
         private readonly static ImmutableArray<byte> pwmChannelRegisters = ImmutableArray.Create<byte>(0x06, 0x08, 0x0a, 0x0c);
@@ -73,14 +63,6 @@ namespace AV00.Drivers.ExpansionBoards
             }
             channelCount = ChannelCount;
             maxChannel = channelCount - 1;
-            Console.WriteLine($"[DFR0604] isPwmEnabled: {isPwmEnabled}");
-            SetPwmEnable();
-            Console.WriteLine($"[DFR0604] isPwmEnabled: {isPwmEnabled}");
-        }
-
-        public void Reset()
-        {
-            throw new Exception("Reset() not yet implemented");
         }
 
         public EnumBoardStatus Init()
@@ -111,6 +93,7 @@ namespace AV00.Drivers.ExpansionBoards
                     SetAdcDisable();
                 }
             }
+            SetPwmEnable();
             return lastOperationStatus;
         }
 

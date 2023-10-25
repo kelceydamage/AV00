@@ -82,16 +82,7 @@ namespace AV00.Drivers.ExpansionBoards
         {
             get { return pwmWriteChannels; }
         }
-        public enum EnumBoardStatus : byte
-        {
-            StatusOk = 0x00,
-            StatusError = 0x01,
-            StatusErrorDeviceNotDetected = 0x02,
-            StatusErrorSoftwareVersion = 0x03,
-            StatusErrorParameter = 0x04,
-            StatusErrorUnableToRead = 0x05,
-            StatusErrorUnableToWrite = 0x06,
-        }
+
         // TODO: Implement for future and update IPwmGenerator interface.
         public EnumBoardStatus LastOperationStatus { get => lastOperationStatus; }
         private EnumBoardStatus lastOperationStatus = EnumBoardStatus.StatusOk;
@@ -121,13 +112,13 @@ namespace AV00.Drivers.ExpansionBoards
                 pwmWriteChannels[i] = (byte)(led0RegisterOnLow + i * 0x04);
                 pwmReadChannels[i] = (byte)(led0RegisterOnLow + (i << 2));
             }
-            Reset();
         }
 
-        public void Reset()
+        public EnumBoardStatus Init()
         {
             i2c.WriteBytes(mode1Register, new byte[] { softwareReset });
             Thread.Sleep(1);
+            return lastOperationStatus;
         }
 
         // The overall PWM frequency in Hertz.

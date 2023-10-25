@@ -37,9 +37,13 @@ namespace AV00.Drivers.IO
             pwmGenerator.SetChannelPwm(ChannelId, PwmAmountPercent);
         }
 
-        public void Reset()
+        public void Init()
         {
-            pwmGenerator.Reset();
+            EnumBoardStatus status = pwmGenerator.Init();
+            if (status != EnumBoardStatus.StatusOk)
+            {
+                throw new Exception($"PWM Generator internal error: {status}");
+            }
         }
     }
 }
