@@ -30,7 +30,7 @@ namespace AV00.Drivers.ExpansionBoards
         private const byte defaultVidRegister = 0x10;
         private const byte enableByte = 0x01;
         private const byte disableByte = 0x00;
-        const byte i2cAddress = 0x10;
+        static readonly byte i2cAddress = 0x10;
         const int defaultChannelCount = 4;
         static readonly int minChannel = 0;
         private readonly int channelCount;
@@ -39,8 +39,8 @@ namespace AV00.Drivers.ExpansionBoards
         public string ErrorMessage = "";
         private byte address = i2cAddress;
 
-        public byte BusId { get => busId; }
-        private readonly byte busId;
+        public int BusId { get => busId; }
+        private readonly int busId;
         public int CurrentFrequency { get => currentFrequency; }
         private int currentFrequency = pwmMinFrequencyHz;
         public bool IsPwmEnabled { get => isPwmEnabled; }
@@ -62,7 +62,7 @@ namespace AV00.Drivers.ExpansionBoards
         public float PwmMaxPercent { get => pwmMaxPercent; }
         private const int pwmMaxPercent = 100;
 
-        public DFR0604(byte I2cBus, int ChannelCount = 4)
+        public DFR0604(int I2cBus, int ChannelCount = 4)
         {
             busId = I2cBus;
             I2cConnectionSettings I2cSettings = new(I2cBus, i2cAddress);
@@ -199,6 +199,7 @@ namespace AV00.Drivers.ExpansionBoards
                 }
                 currentFrequency = frequency;
             }
+            Console.WriteLine($"[SetFrequency] isPwmEnabled: {isPwmEnabled}");
         }
 
         private void ValidateChannelId(int ChannelId)
@@ -213,6 +214,7 @@ namespace AV00.Drivers.ExpansionBoards
         public void SetChannelPwm(int channelId, float PwmAmountPercent)
         {
             ValidateChannelId(channelId);
+            Console.WriteLine($"[SetChannelPwm] isPwmEnabled: {isPwmEnabled}");
             if (PwmAmountPercent < 0 || PwmAmountPercent > 100.0f)
             {
                 lastOperationStatus = EnumBoardStatus.StatusErrorParameter;
