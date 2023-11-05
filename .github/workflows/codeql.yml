@@ -48,6 +48,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Check out AV00-Shared
+      uses: actions/checkout@master
+      with:
+        repository: AV00-Shared
+        token: ${{ secrets.GHA_PAT }}
+
+    - name: Check out AV00-Transport
+      uses: actions/checkout@master
+      with:
+        repository: AV00-Transport
+        token: ${{ secrets.GHA_PAT }}
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
@@ -73,6 +85,8 @@ jobs:
     #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
     - run: |
         pwd
+        ls -la
+        cd ..
         ls -la
         echo "Run, Build Application using script"
     #    ./location_of_script_within_repo/buildscript.sh
