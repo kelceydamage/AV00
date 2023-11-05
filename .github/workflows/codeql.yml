@@ -45,9 +45,13 @@ jobs:
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
+    - name: Checkout AV00
+      uses: actions/checkout@master
+      with:
+        repository: kelceydamage/AV00
+        token: ${{ secrets.GHA_PAT }}
+        path: AV00
+      
     - name: Check out AV00-Shared
       uses: actions/checkout@master
       with:
@@ -88,10 +92,9 @@ jobs:
     - run: |
         pwd
         ls -la
-        cd ..
+        cd AV00
         ls -la
-        echo "Run, Build Application using script"
-    #    ./location_of_script_within_repo/buildscript.sh
+        dotnet build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
