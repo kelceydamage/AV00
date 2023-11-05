@@ -76,7 +76,7 @@ jobs:
         # queries: security-extended,security-and-quality
 
     - name: Build Project
-    - run: |
+      run: |
         cd AV00
         dotnet build
 
