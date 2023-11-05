@@ -51,13 +51,13 @@ jobs:
     - name: Check out AV00-Shared
       uses: actions/checkout@master
       with:
-        repository: AV00-Shared
+        repository: kelceydamage/AV00-Shared
         token: ${{ secrets.GHA_PAT }}
 
     - name: Check out AV00-Transport
       uses: actions/checkout@master
       with:
-        repository: AV00-Transport
+        repository: kelceydamage/AV00-Transport
         token: ${{ secrets.GHA_PAT }}
 
     # Initializes the CodeQL tools for scanning.
