@@ -6,12 +6,12 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["AV00/AV00.csproj", "AV00/"]
+COPY ["AV00/AV00/AV00.csproj", "AV00/AV00/"]
 COPY ["AV00-Shared/AV00-Shared.csproj", "AV00-Shared/"]
-COPY ["AV00-Transport/AV00-Transport.csproj", "AV00-Transport/"]
-RUN dotnet restore "AV00/AV00.csproj"
+COPY ["AV00-Transport/AV00-Transport/AV00-Transport.csproj", "AV00-Transport/"]
+RUN dotnet restore "AV00/AV00/AV00.csproj"
 COPY . .
-WORKDIR "/src/AV00"
+WORKDIR "/src/AV00/AV00"
 RUN dotnet build "AV00.csproj" -c Release -o /app/build
 
 FROM build AS publish
