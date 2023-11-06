@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
-    <PlatformTarget>ARM64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <!--<PackageReference Include="NetMQ" Version="4.0.1.13" />-->
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.4" />
     <PackageReference Include="NetMQ" Version="4.0.1.13" />
     <PackageReference Include="System.Device.Gpio" Version="3.0.0" />
@@ -25,7 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\AV00-Shared\AV00-Shared.csproj" />
-    <ProjectReference Include="..\..\AV00-Transport\AV00-Transport.csproj" />
+    <ProjectReference Include="..\..\AV00-Transport\AV00-Transport\AV00-Transport.csproj" />
   </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AV00", "AV00\AV00.csproj", "{D7534BDC-6037-4292-A640-231BA9D0F095}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AV00-Transport", "..\AV00-Transport\AV00-Transport.csproj", "{53585EDD-5C2A-49A9-AA1B-EA54F038B54A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AV00-Transport", "..\AV00-Transport\AV00-Transport\AV00-Transport.csproj", "{53585EDD-5C2A-49A9-AA1B-EA54F038B54A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AV00-Shared", "..\AV00-Shared\AV00-Shared.csproj", "{300916B5-B470-44D3-9F9C-691811135D11}"
 EndProject
