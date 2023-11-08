@@ -36,7 +36,7 @@ namespace AV00.Controllers.MotorController
         public MotorCommandEventModel(
             string ServiceName,
             EnumMotorCommands Command,
-            int Direction,
+            EnumMotorDirection Direction,
             float PwmAmount,
             EnumExecutionMode Mode,
             string Id,
@@ -44,7 +44,7 @@ namespace AV00.Controllers.MotorController
         ) : base(ServiceName, Guid.Parse(Id), TimeStamp)
         {
             command = Command;
-            direction = (EnumMotorDirection)Enum.ToObject(typeof(EnumMotorDirection), Direction);
+            direction = Direction;
             pwmAmount = PwmAmount;
             mode = Mode;
         }
