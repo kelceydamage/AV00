@@ -20,7 +20,7 @@ class CLI:
         self.parser.add_argument(
             "-d",
             "--direction",
-            choices=[e.name for e in MotorDirection]
+            choices=list(vars(MotorDirection()).keys())
         )
         self.parser.add_argument(
             "-p",

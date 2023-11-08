@@ -21,6 +21,12 @@ class MotorDirection:
     Left = {};
     Right = {};
 
+    def __init__(self):
+        self.Forwards = {};
+        self.Backwards = {};
+        self.Left = {};
+        self.Right = {};
+
 
 class Event:
 
