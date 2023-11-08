@@ -18,17 +18,32 @@ namespace AV00.Controllers.MotorController
         }
     }
 
+    public enum EnumMotorDirection
+    {
+        Low,
+        High,
+    }
+
     public class MotorDirection
     {
-        private static readonly PinValue forwards = PinValue.High;
-        private static readonly PinValue backwards = PinValue.Low;
-        private static readonly PinValue left = PinValue.High;
-        private static readonly PinValue right = PinValue.Low;
+        private static readonly EnumMotorDirection forwards = EnumMotorDirection.High;
+        private static readonly EnumMotorDirection backwards = EnumMotorDirection.Low;
+        private static readonly EnumMotorDirection left = EnumMotorDirection.High;
+        private static readonly EnumMotorDirection right = EnumMotorDirection.Low;
+        public static EnumMotorDirection Forwards { get => forwards; }
+        public static EnumMotorDirection Backwards { get => backwards; }
+        public static EnumMotorDirection Left { get => left; }
+        public static EnumMotorDirection Right { get => right; }
+        private static Dictionary<EnumMotorDirection, PinValue> pinValues = new()
+        {
+            { EnumMotorDirection.High, PinValue.High },
+            { EnumMotorDirection.Low, PinValue.Low }
+        };
 
-        public static PinValue Forwards { get => forwards; }
-        public static PinValue Backwards { get => backwards; }
-        public static PinValue Left { get => left; }
-        public static PinValue Right { get => right; }
+        public static PinValue PinValueFromDirection(EnumMotorDirection MotorDirection)
+        {
+            return pinValues[MotorDirection];
+        }
     }
 
     public enum EnumMotorCommands
@@ -120,11 +135,11 @@ namespace AV00.Controllers.MotorController
             Token.ThrowIfCancellationRequested();
             IMotor RequestedMotor = motorRegistry[MotorRequest.Command].Motor;
             WriteLogFile(RequestedMotor, MotorRequest);
-            if (MotorRequest.Direction != RequestedMotor.CurrentDirection)
+            if (MotorDirection.PinValueFromDirection(MotorRequest.Direction) != RequestedMotor.CurrentDirection)
             {
                 GradualStop(RequestedMotor, MotorRequest, Token);
             }
-            RequestedMotor.CurrentDirection = MotorRequest.Direction;
+            RequestedMotor.CurrentDirection = MotorDirection.PinValueFromDirection(MotorRequest.Direction);
             if (MotorRequest.PwmAmount == RequestedMotor.CurrentPwmAmount) { return; }
             else if (MotorRequest.PwmAmount > RequestedMotor.CurrentPwmAmount)
             {

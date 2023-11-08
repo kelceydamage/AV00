@@ -1,6 +1,5 @@
 ﻿using AV00_Shared.FlowControl;
 using AV00_Shared.Models;
-using System.Device.Gpio;
 using System.Text.Json.Serialization;
 
 namespace AV00.Controllers.MotorController
@@ -8,8 +7,8 @@ namespace AV00.Controllers.MotorController
     [Serializable]
     public class MotorCommandEventModel : EventModel, IEventModel
     {
-        public PinValue Direction { get => direction; }
-        private readonly PinValue direction;
+        public EnumMotorDirection Direction { get => direction; }
+        private readonly EnumMotorDirection direction;
         public float PwmAmount { get => pwmAmount; }
         private readonly float pwmAmount;
         public EnumMotorCommands Command { get => command; }
@@ -20,7 +19,7 @@ namespace AV00.Controllers.MotorController
         public MotorCommandEventModel(
             string ServiceName,
             EnumMotorCommands Command,
-            PinValue Direction,
+            EnumMotorDirection Direction,
             float PwmAmount,
             EnumExecutionMode Mode = EnumExecutionMode.Blocking,
             Guid? Id = null,
@@ -37,7 +36,7 @@ namespace AV00.Controllers.MotorController
         public MotorCommandEventModel(
             string ServiceName,
             EnumMotorCommands Command,
-            PinValue Direction,
+            int Direction,
             float PwmAmount,
             EnumExecutionMode Mode,
             Guid Id,
@@ -45,7 +44,7 @@ namespace AV00.Controllers.MotorController
         ) : base(ServiceName, Id, TimeStamp)
         {
             command = Command;
-            direction = Direction;
+            direction = (EnumMotorDirection)Direction;
             pwmAmount = PwmAmount;
             mode = Mode;
         }

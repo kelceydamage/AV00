@@ -57,7 +57,7 @@ if __name__ == "__main__":
     motor_event = MotorEvent(
          ServiceName="DriveService",
          Command=EnumMotorCommands[cli.args.command].value,
-         Direction=MotorDirection.__dict__[cli.args.direction],
+         Direction=MotorDirection().__dict__[cli.args.direction],
          PwmAmount=float(cli.args.power),
     )
     relay_client.send_motor_event(motor_event)    
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     motor_event = MotorEvent(
          ServiceName="DriveService",
          Command=EnumMotorCommands.Move,
-         Direction={},
+         Direction=MotorDirection().__dict__[cli.args.direction],
          PwmAmount=0.0,
     )
     relay_client.send_motor_event(motor_event)

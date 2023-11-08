@@ -14,18 +14,19 @@ class EnumMotorCommands(int, Enum):
     Turn = 1
 
 
+class EnumMotorDirection(int, Enum):
+    Low = 0
+    High = 1
+
+
 class MotorDirection:
-    # PinValues
-    #Forwards = "High"
-    #Backwards = "Low"
-    #Left = "High"
-    #Right = "Low"
 
     def __init__(self):
-        self.Forwards = 1
-        self.Backwards = 0
-        self.Left = 0
-        self.Right = 1
+        self.Forwards = EnumMotorDirection.High
+        self.Backwards = EnumMotorDirection.Low
+        self.Left = EnumMotorDirection.High
+        self.Right = EnumMotorDirection.Low
+
 
 class Event:
 
