@@ -39,9 +39,9 @@ namespace AV00.Controllers.MotorController
             EnumMotorDirection Direction,
             float PwmAmount,
             EnumExecutionMode Mode,
-            string Id,
+            Guid Id,
             string TimeStamp
-        ) : base(ServiceName, Guid.Parse(Id), TimeStamp)
+        ) : base(ServiceName, Id, TimeStamp)
         {
             command = Command;
             direction = Direction;
