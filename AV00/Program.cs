@@ -43,7 +43,7 @@ namespace AV00
         public static void Main()
         {
             Console.WriteLine("Starting");
-            Console.WriteLine($"Pin High = {PinValue.High}, Pin Low = {PinValue.Low}");
+            Console.WriteLine($"Pin High = {PinValue.High.}, Pin Low = {PinValue.Low}");
             DeviceRegistryService deviceRegistry = new();
             ServiceRegistry.AddService(deviceRegistry);
 
