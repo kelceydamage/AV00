@@ -56,9 +56,9 @@ if __name__ == "__main__":
     
     motor_event = MotorEvent(
          ServiceName="DriveService",
-         Command=EnumMotorCommands(cli.args["comman"]),
+         Command=EnumMotorCommands(cli.args.command),
          Direction={},
-         PwmAmount=cli.args["power"],
+         PwmAmount=cli.args.power,
     )
     relay_client.send_motor_event(motor_event)    
     time.sleep(1)
