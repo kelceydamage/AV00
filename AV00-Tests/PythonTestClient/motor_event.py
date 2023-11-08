@@ -16,17 +16,16 @@ class EnumMotorCommands(int, Enum):
 
 class MotorDirection:
     # PinValues
-    Forwards = {};
-    Backwards = {};
-    Left = {};
-    Right = {};
+    Forwards = "High"
+    Backwards = "Low"
+    Left = "High"
+    Right = "Low"
 
     def __init__(self):
-        self.Forwards = {};
-        self.Backwards = {};
-        self.Left = {};
-        self.Right = {};
-
+        self.Forwards = "High"
+        self.Backwards = "Low"
+        self.Left = "High"
+        self.Right = "Low"
 
 class Event:
 
