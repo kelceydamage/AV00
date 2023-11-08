@@ -8,6 +8,7 @@ using AV00.Drivers.IO;
 using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
 using Transport.Client;
+using System.Device.Gpio;
 
 namespace AV00
 {
@@ -42,6 +43,7 @@ namespace AV00
         public static void Main()
         {
             Console.WriteLine("Starting");
+            Console.WriteLine($"Pin High = {PinValue.High}, Pin Low = {PinValue.Low}");
             DeviceRegistryService deviceRegistry = new();
             ServiceRegistry.AddService(deviceRegistry);
 

@@ -56,7 +56,7 @@ if __name__ == "__main__":
     
     motor_event = MotorEvent(
          ServiceName="DriveService",
-         Command=EnumMotorCommands(cli.args.command),
+         Command=EnumMotorCommands[cli.args.command].value,
          Direction={},
          PwmAmount=cli.args.power,
     )
