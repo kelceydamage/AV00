@@ -7,8 +7,6 @@ using AV00.Controllers.MotorController;
 using AV00.Drivers.IO;
 using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
-using AV00.Communication;
-using AV00_Shared.FlowControl;
 using Transport.Client;
 
 namespace AV00
@@ -75,6 +73,7 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
+            /*
             MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
@@ -96,7 +95,10 @@ namespace AV00
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-            Console.WriteLine($"STATUS4: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
+
+            */
+
+
             var i = 0;
             while(!Console.KeyAvailable)
             {
