@@ -20,12 +20,14 @@ class Event:
         self.motor_event = motor_event
        
     def serialize(self):
-        return [
-            self.motor_event.service_name,
-            EnumEventType.Event,
+        temp = [
+            str.encode(self.motor_event.service_name),
+            EnumEventType(0).name,
             self.motor_event._id,
             json.dumps(self.motor_event.to_dict())
         ]
+        print(temp)
+        return temp
 
 
 class MotorEvent:
