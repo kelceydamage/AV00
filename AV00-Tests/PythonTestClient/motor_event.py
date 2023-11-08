@@ -14,6 +14,14 @@ class EnumMotorCommands(int, Enum):
     Turn = 1
 
 
+class MotorDirection:
+    # PinValues
+    Forwards = {};
+    Backwards = {};
+    Left = {};
+    Right = {};
+
+
 class Event:
 
     def __init__(self, motor_event):
@@ -24,7 +32,7 @@ class Event:
             str.encode(self.motor_event.service_name),
             str.encode(EnumEventType(0).name),
             str.encode(self.motor_event._id),
-            json.dumps(self.motor_event.to_dict())
+            str.encode(json.dumps(self.motor_event.to_dict()))
         ]
         print(temp)
         return temp

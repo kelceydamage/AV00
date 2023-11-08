@@ -1,7 +1,33 @@
 
+from os import name
 import zmq
 import time
+import argparse
 from motor_event import *
+
+
+class CLI:
+    
+    def __init__(self):
+        self.parser = argparse.ArgumentParser()
+
+    def configure_arguments(self):
+        self.parser.add_argument(
+            "-c",
+            "--command",
+            choices=["Move", "Turn"] 
+        )
+        self.parser.add_argument(
+            "-d",
+            "--direction",
+            choices=[e.name for e in MotorDirection]
+        )
+        self.parser.add_argument(
+            "-p",
+            "--power",
+            help="Float between 0 and 100"
+        )
+        self.args = self.parser.parse_args()
 
 
 class RelayClient:
@@ -23,13 +49,16 @@ class main:
 
 
 if __name__ == "__main__":
+    cli = CLI()
+    cli.configure_arguments()
+    
     relay_client = RelayClient()
     
     motor_event = MotorEvent(
          ServiceName="DriveService",
-         Command=EnumMotorCommands.Move,
+         Command=EnumMotorCommands(cli.args["comman"]),
          Direction={},
-         PwmAmount=30.0,
+         PwmAmount=cli.args["power"],
     )
     relay_client.send_motor_event(motor_event)    
     time.sleep(1)
