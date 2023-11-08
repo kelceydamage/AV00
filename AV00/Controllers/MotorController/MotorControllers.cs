@@ -192,7 +192,7 @@ namespace AV00.Controllers.MotorController
             if (Motor.CurrentPwmAmount < stopAmount) { Motor.CurrentPwmAmount = stopAmount; }
             if (targetPwm <= Motor.CurrentPwmAmount) { return; }
             float runAmount = (float)Math.Floor(Motor.PwmSoftCaps.RunPwm * servoBoardController.PwmMaxPercent);
-            Console.WriteLine($"Target= {targetPwm}, softCap= {runAmount}");
+            Console.WriteLine($"Target= {targetPwm}, softCap= {runAmount}, PwmSoftCaps.RunPw={Motor.PwmSoftCaps.RunPwm}, PwmMaxPercent={servoBoardController.PwmMaxPercent}");
             if (targetPwm > runAmount) { targetPwm = runAmount; }
             float pwmChangeAmount = (float)Math.Floor(servoBoardController.PwmMaxPercent * Motor.DutyCycleChangeStepPct);
             Console.WriteLine($"*DEBUG* MOTOR-CONTROLLER [Accelerate] Current speed {Motor.CurrentPwmAmount} Target speed {targetPwm} Stepping {pwmChangeAmount}");
