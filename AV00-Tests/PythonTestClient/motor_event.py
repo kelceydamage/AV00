@@ -3,13 +3,13 @@ import json
 from enum import Enum
 
 
-class EnumEventType(Enum):
+class EnumEventType(int, Enum):
     Event = 0
     EventReceipt = 1
     EventLog = 2
 
 
-class EnumMotorCommands(Enum):
+class EnumMotorCommands(int, Enum):
     Move = 0
     Turn = 1
 
@@ -47,6 +47,6 @@ class MotorEvent:
             "Direction": self.direction,
             "PwmAmount": self.pwm_amount,
             "EnumExecutionMode": self.mode,
-            "Id": self._id,
+            "Id": str(self._id),
             "TimeStamp": self.timestamp,
         }
