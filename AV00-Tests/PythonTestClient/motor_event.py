@@ -22,8 +22,8 @@ class Event:
     def serialize(self):
         temp = [
             str.encode(self.motor_event.service_name),
-            EnumEventType(0).name,
-            self.motor_event._id,
+            str.encode(EnumEventType(0).name),
+            str.encode(self.motor_event._id),
             json.dumps(self.motor_event.to_dict())
         ]
         print(temp)
@@ -39,7 +39,7 @@ class MotorEvent:
         self.pwm_amount = PwmAmount
         self.command = Command
         self.mode = Mode
-        self._id = uuid.uuid4()
+        self._id =  str(uuid.uuid4())
         self.timestamp = "fake-time-stamp"
     
     def to_dict(self):
@@ -49,6 +49,6 @@ class MotorEvent:
             "Direction": self.direction,
             "PwmAmount": self.pwm_amount,
             "EnumExecutionMode": self.mode,
-            "Id": str(self._id),
+            "Id": self._id,
             "TimeStamp": self.timestamp,
         }

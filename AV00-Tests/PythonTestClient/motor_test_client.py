@@ -28,7 +28,7 @@ if __name__ == "__main__":
     motor_event = MotorEvent(
          ServiceName="DriveService",
          Command=EnumMotorCommands.Move,
-         Direction=0,
+         Direction={},
          PwmAmount=30.0,
     )
     relay_client.send_motor_event(motor_event)    
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     motor_event = MotorEvent(
          ServiceName="DriveService",
          Command=EnumMotorCommands.Move,
-         Direction=0,
+         Direction={},
          PwmAmount=0.0,
     )
     relay_client.send_motor_event(motor_event)
