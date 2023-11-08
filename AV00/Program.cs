@@ -60,8 +60,8 @@ namespace AV00
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A39012(127, 1, "TurningMotor"),
-                new MDD10A55072(112, 0, "DriveMotor")
+                new MDD10A39012(127, 0, "TurningMotor"),
+                new MDD10A55072(112, 1, "DriveMotor")
             );
             Console.WriteLine($"STATUS: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
