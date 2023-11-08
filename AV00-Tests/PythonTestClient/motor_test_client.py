@@ -13,7 +13,7 @@ class RelayClient:
     
     def send_motor_event(self, motor_event):
         event = Event(motor_event)
-        self.socket.send_multipart(event.Serialize())
+        self.socket.send_multipart(event.serialize())
 
 class main:
     
