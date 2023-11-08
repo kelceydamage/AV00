@@ -62,7 +62,7 @@ class MotorEvent:
             "Command": self.command,
             "Direction": self.direction,
             "PwmAmount": self.pwm_amount,
-            "EnumExecutionMode": self.mode,
+            "Mode": self.mode,
             "Id": self._id,
             "TimeStamp": self.timestamp,
         }
