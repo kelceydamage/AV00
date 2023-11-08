@@ -7,9 +7,8 @@ using AV00.Controllers.MotorController;
 using AV00.Drivers.IO;
 using AV00.Drivers.Motors;
 using AV00.Drivers.ExpansionBoards;
-using AV00.Communication;
-using AV00_Shared.FlowControl;
 using Transport.Client;
+using System.Device.Gpio;
 
 namespace AV00
 {
@@ -44,6 +43,7 @@ namespace AV00
         public static void Main()
         {
             Console.WriteLine("Starting");
+            Console.WriteLine($"Pin High = {PinValue.High}, Pin Low = {PinValue.Low}");
             DeviceRegistryService deviceRegistry = new();
             ServiceRegistry.AddService(deviceRegistry);
 
@@ -60,8 +60,8 @@ namespace AV00
             PDSGBGearboxMotorController motorController = new(
                 new GPIO(GpioControllerId),
                 pwmDriver,
-                new MDD10A39012(127, 1, "TurningMotor"),
-                new MDD10A55072(112, 0, "DriveMotor")
+                new MDD10A39012(127, 0, "TurningMotor"),
+                new MDD10A55072(112, 1, "DriveMotor")
             );
             Console.WriteLine($"STATUS: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
             DriveService driveService = new(motorController, ConfigurationManager.ConnectionStrings, ConfigurationManager.AppSettings);
@@ -75,6 +75,13 @@ namespace AV00
             transportRelayThread.Start();
             driveServiceThread.Start();
 
+            
+            MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Backwards, 0f);
+            MotorEvent @event = new(eventModel);
+            Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
+            transportClient.PushEvent(@event);
+
+            /*
             MotorCommandEventModel eventModel = new("DriveService", EnumMotorCommands.Move, MotorDirection.Forwards, 30f);
             MotorEvent @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
@@ -96,7 +103,10 @@ namespace AV00
             @event = new(eventModel);
             Console.WriteLine($"PROGRAM: [Pushing] TaskEvent {@event.Id}");
             transportClient.PushEvent(@event);
-            Console.WriteLine($"STATUS4: {DFR0604.LastOperationStatus}, REASON: {DFR0604.ErrorMessage}");
+
+            */
+
+
             var i = 0;
             while(!Console.KeyAvailable)
             {

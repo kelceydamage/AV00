@@ -21,7 +21,7 @@ namespace AV00.Drivers.Motors
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public float DutyCycleChangeStepPct { get; } = 0.01f;
-        public short DutyCycleChangeIntervalMs { get; } = 100;
+        public short DutyCycleChangeIntervalMs { get; } = 40;
         public string Name { get; set; }
         public PinValue CurrentDirection { get => currentDirection; set => currentDirection = value; }
         private PinValue currentDirection = PinValue.Low;
@@ -45,7 +45,7 @@ namespace AV00.Drivers.Motors
         public short DirectionPin { get; }
         public int PwmChannelId { get; }
         public float DutyCycleChangeStepPct { get; } = 0.01f;
-        public short DutyCycleChangeIntervalMs { get; } = 100;
+        public short DutyCycleChangeIntervalMs { get; } = 40;
         public string Name { get; set; }
         public PinValue CurrentDirection { get => currentDirection; set => currentDirection = value; }
         private PinValue currentDirection = PinValue.Low;
