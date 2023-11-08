@@ -9,10 +9,11 @@ class RelayClient:
     def __init__(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
-        self.socket.bind("tcp://localhost:5556")
+        self.socket.connect("tcp://127.0.0.1:5556")
     
     def send_motor_event(self, motor_event):
-        self.socket.send_multipart(motor_event.Serialize())
+        event = Event(motor_event)
+        self.socket.send_multipart(event.Serialize())
 
 class main:
     
