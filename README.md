@@ -7,6 +7,7 @@ Relies on [AV00-Transport](https://github.com/kelceydamage/AV00-Transport) for i
 ![Untitled drawing (1)](https://github.com/kelceydamage/sensors-test/assets/16090219/1d6d7f56-4ac8-4e3f-91a6-4593bf0f7f37)
 
 ## Issues
+* It is too easy to configure the wrong engine on the wrong channel and have bad things happen. I need to find a way to make this more robust. Example: I had the motors swapped and the wrong motor was using the wrong software constraints (Move used Turn softCaps and nearly blew the power source).
 
 # Version 1 Outstanding Goals
 ## TODO - High Level
